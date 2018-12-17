@@ -49,7 +49,11 @@ link:sketches/arduino/WS2812-test/WS2812-test.ino[Test]
 
 ==== Resources
 
+* https://github.com/FastLED/FastLED
 * https://github.com/adafruit/Adafruit_NeoPixel[Adafruit_NeoPixel]
 * https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/[Examples]
 
 * LUSTREON 50CM Aluminum Channel Holder For LED Strip Light Bar Under Cabinet Lamp
+
+* https://www.instructables.com/id/Wireless-Music-Reactive-Floor-Lamps
+* https://github.com/hansjny/Natural-Nerd/tree/master/SoundReactive2
