@@ -9,7 +9,7 @@ Having fun with lights and micro-controllers.
 
 WS2812 comes in 5v or 12v.
 
-[NOTE]
+[WARNING]
 ====
 12v are hooked 3 by 3, which means that programmatically there are 3 times less leds.
 ====
@@ -21,6 +21,8 @@ I use 5v 150W power supply so that 10m 600 led strip is fine.
 ==== Wiring
 
 Using Arduino Pro Mini 5v as reference.
+
+Wiring for ESP8266 or ESP32 is same as stated below.
 
 As stated in NeoPixel library:
 
@@ -39,13 +41,19 @@ Then just hook up data pin to one of the pin of arduino.
 For 12v strips, make sure not to burn the arduino 5v: don't hook the Vcc !
 ====
 
+
+image:res/ws2812-wiring.png[]
+
+
 ==== Sketches
 
-Initial samples:
+External samples:
 
 * https://github.com/FastLED/FastLED/blob/master/examples/DemoReel100/DemoReel100.ino[Very Good example]
 
-link:sketches/arduino/WS2812-test/WS2812-test.ino[Test]
+Internal samples:
+
+* link:sketches/arduino/WS2812/Fast-LED-sample1/Fast-LED-sample1.ino[Fast-LED-sample1.ino]
 
 ==== Resources
 
