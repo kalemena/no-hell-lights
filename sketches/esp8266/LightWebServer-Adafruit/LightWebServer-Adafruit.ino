@@ -3,6 +3,7 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
+#include <EEPROM.h>
 //#include <FS.h>
 
 // ===== CONFIGURATION
@@ -38,8 +39,9 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LED_PIN, NEO_RGB + NEO_KHZ
 // and minimize distance between Arduino and first pixel.  Avoid connecting
 // on a live circuit...if you must, connect GND first.
 
-String scene = "color";
 boolean inProgress = false;
+byte selectedEffect=0;
+boolean effectChanged = false;
 
 void setup(void) {
   Serial.begin(115200);
@@ -86,7 +88,7 @@ void setup(void) {
   
   Serial.println("Controller initializing");
   server.on("/", handle_Root);
-  server.on("/scene", HTTP_GET, handle_Scene);
+  server.on("/switch", HTTP_GET, handle_SwitchEffect);
   // server.on("/status", handle_Status);
   
   // static files
@@ -103,9 +105,150 @@ void loop(void) {
   server.handleClient();
 
   if(inProgress == false) {
-    if(scene == SCENE_THEATER_CHASE_RAINBOW) {
-      inProgress = true;
-      process_scene_theaterchaserainbow(50);
+    // record last effect
+    EEPROM.get(0,selectedEffect);
+    if(selectedEffect>18) { 
+      selectedEffect=0;
+      EEPROM.put(0,0); 
+    }
+    
+    inProgress = true;
+    switch(selectedEffect) {
+    
+    case 0  : {
+                // RGBLoop - no parameters
+                RGBLoop();
+                break;
+              }
+
+    case 1  : {
+                // FadeInOut - Color (red, green. blue)
+                FadeInOut(0xff, 0x00, 0x00); // red
+                FadeInOut(0xff, 0xff, 0xff); // white 
+                FadeInOut(0x00, 0x00, 0xff); // blue
+                break;
+              }
+              
+    case 2  : {
+                // Strobe - Color (red, green, blue), number of flashes, flash speed, end pause
+                Strobe(0xff, 0xff, 0xff, 10, 50, 1000);
+                break;
+              }
+
+    case 3  : {
+                // HalloweenEyes - Color (red, green, blue), Size of eye, space between eyes, fade (true/false), steps, fade delay, end pause
+                HalloweenEyes(0xff, 0x00, 0x00, 
+                              1, 4, 
+                              true, random(5,50), random(50,150), 
+                              random(1000, 10000));
+                HalloweenEyes(0xff, 0x00, 0x00, 
+                              1, 4, 
+                              true, random(5,50), random(50,150), 
+                              random(1000, 10000));
+                break;
+              }
+              
+    case 4  : {
+                // CylonBounce - Color (red, green, blue), eye size, speed delay, end pause
+                CylonBounce(0xff, 0x00, 0x00, 4, 10, 50);
+                break;
+              }
+              
+    case 5  : {
+                // NewKITT - Color (red, green, blue), eye size, speed delay, end pause
+                NewKITT(0xff, 0x00, 0x00, 8, 10, 50);
+                break;
+              }
+              
+    case 6  : {
+                // Twinkle - Color (red, green, blue), count, speed delay, only one twinkle (true/false) 
+                Twinkle(0xff, 0x00, 0x00, 10, 100, false);
+                break;
+              }
+              
+    case 7  : { 
+                // TwinkleRandom - twinkle count, speed delay, only one (true/false)
+                TwinkleRandom(20, 100, false);
+                break;
+              }
+              
+    case 8  : {
+                // Sparkle - Color (red, green, blue), speed delay
+                Sparkle(0xff, 0xff, 0xff, 0);
+                break;
+              }
+               
+    case 9  : {
+                // SnowSparkle - Color (red, green, blue), sparkle delay, speed delay
+                SnowSparkle(0x10, 0x10, 0x10, 20, random(100,1000));
+                break;
+              }
+              
+    case 10 : {
+                // Running Lights - Color (red, green, blue), wave dealy
+                RunningLights(0xff,0x00,0x00, 50);  // red
+                RunningLights(0xff,0xff,0xff, 50);  // white
+                RunningLights(0x00,0x00,0xff, 50);  // blue
+                break;
+              }
+              
+    case 11 : {
+                // colorWipe - Color (red, green, blue), speed delay
+                colorWipe(0x00,0xff,0x00, 50);
+                colorWipe(0x00,0x00,0x00, 50);
+                break;
+              }
+
+    case 12 : {
+                // rainbowCycle - speed delay
+                rainbowCycle(20);
+                break;
+              }
+
+    case 13 : {
+                // theatherChase - Color (red, green, blue), speed delay
+                theaterChase(0xff,0,0,50);
+                break;
+              }
+
+    case 14 : {
+                // theaterChaseRainbow - Speed delay
+                theaterChaseRainbow(50);
+                break;
+              }
+
+    case 15 : {
+                // Fire - Cooling rate, Sparking rate, speed delay
+                Fire(55,120,15);
+                break;
+              }
+
+
+              // simple bouncingBalls not included, since BouncingColoredBalls can perform this as well as shown below
+              // BouncingColoredBalls - Number of balls, color (red, green, blue) array, continuous
+              // CAUTION: If set to continuous then this effect will never stop!!! 
+              
+    case 16 : {
+                // mimic BouncingBalls
+                byte onecolor[1][3] = { {0xff, 0x00, 0x00} };
+                BouncingColoredBalls(1, onecolor, false);
+                break;
+              }
+
+    case 17 : {
+                // multiple colored balls
+                byte colors[3][3] = { {0xff, 0x00, 0x00}, 
+                                      {0xff, 0xff, 0xff}, 
+                                      {0x00, 0x00, 0xff} };
+                BouncingColoredBalls(3, colors, false);
+                break;
+              }
+
+    case 18 : {
+                // meteorRain - Color (red, green, blue), meteor size, trail decay, random trail decay (true/false), speed delay 
+                meteorRain(0xff,0xff,0xff,10, 64, true, 30);
+                break;
+              }
     }
     inProgress = false;
   }
@@ -181,84 +324,621 @@ void handle_Status() {
   json = String();
 }
 
-void handle_Scene() {
-  if(!server.hasArg("id")) {
-    handle_Root();
-    return;
-  }
+void handle_SwitchEffect() {
+  selectedEffect++;
+  EEPROM.put(0, selectedEffect);
+  effectChanged = true;
 
-  scene = server.arg("id"); Serial.println("Scene: " + scene);
-  
-  String json = "{}\n";
+  String json = "{\n";
+  json += " \"effect\":" + String(selectedEffect) + "\n";
+  json += "}";
   server.send(200, "application/json", json);
   json = String();
 }
 
-// ==== Scenes
+// *************************
+// ** LEDEffect Functions **
+// *************************
 
-void process_scene_color(String color){
-  Serial.print("Processing request");
-
-  // converting Hex to Int
-  int number = (int) strtol( &color[1], NULL, 16);
-  
-  // splitting into three parts
-  int r = number >> 16;
-  int g = number >> 8 & 0xFF;
-  int b = number & 0xFF;
-  
-  // DEBUG
-  Serial.print("RGB: ");
-  Serial.print(r, DEC);
-  Serial.print(" ");
-  Serial.print(g, DEC);
-  Serial.print(" ");
-  Serial.print(b, DEC);
-  Serial.println(" ");
-  
-  // setting whole strip to the given color
-  for(int i=0; i < NUM_LEDS; i++) {
-    strip.setPixelColor(i, strip.Color( g, r, b ) );
+void RGBLoop(){
+  for(int j = 0; j < 3; j++ ) { 
+    // Fade IN
+    for(int k = 0; k < 256; k++) { 
+      switch(j) { 
+        case 0: setAll(k,0,0); break;
+        case 1: setAll(0,k,0); break;
+        case 2: setAll(0,0,k); break;
+      }
+      showStrip();
+      if(tick()) return;
+      delay(3);
+    }
+    // Fade OUT
+    for(int k = 255; k >= 0; k--) { 
+      switch(j) { 
+        case 0: setAll(k,0,0); break;
+        case 1: setAll(0,k,0); break;
+        case 2: setAll(0,0,k); break;
+      }
+      showStrip();
+      if(tick()) return;
+      delay(3);
+    }
   }
-  // init
-  strip.show();
-  
-  Serial.println("on.");
 }
 
-//Theatre-style crawling lights with rainbow effect
-void process_scene_theaterchaserainbow(uint8_t wait) {
-  for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
-    for (int q=0; q < 3; q++) {
-      for (int i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, Wheel( (i+j) % 255));    //turn every third pixel on
-      }
-      strip.show();
-
-      delay(wait);
+void FadeInOut(byte red, byte green, byte blue){
+  float r, g, b;
       
-      loop();
-      if(scene != SCENE_THEATER_CHASE_RAINBOW)
-        return;
+  for(int k = 0; k < 256; k=k+1) { 
+    r = (k/256.0)*red;
+    g = (k/256.0)*green;
+    b = (k/256.0)*blue;
+    setAll(r,g,b);
+    showStrip();
+    if(tick()) return;
+  }
+     
+  for(int k = 255; k >= 0; k=k-2) {
+    r = (k/256.0)*red;
+    g = (k/256.0)*green;
+    b = (k/256.0)*blue;
+    setAll(r,g,b);
+    showStrip();
+    if(tick()) return;
+  }
+}
 
-      for (int i=0; i < strip.numPixels(); i=i+3) {
-        strip.setPixelColor(i+q, 0);        //turn every third pixel off
+void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, int EndPause){
+  for(int j = 0; j < StrobeCount; j++) {
+    setAll(red,green,blue);
+    showStrip();
+    if(tick()) return;
+    delay(FlashDelay);
+    setAll(0,0,0);
+    showStrip();
+    if(tick()) return;
+    delay(FlashDelay);
+  }
+ 
+ delay(EndPause);
+}
+
+void HalloweenEyes(byte red, byte green, byte blue, 
+                   int EyeWidth, int EyeSpace, 
+                   boolean Fade, int Steps, int FadeDelay,
+                   int EndPause){
+  randomSeed(analogRead(0));
+  
+  int i;
+  int StartPoint  = random( 0, NUM_LEDS - (2*EyeWidth) - EyeSpace );
+  int Start2ndEye = StartPoint + EyeWidth + EyeSpace;
+  
+  for(i = 0; i < EyeWidth; i++) {
+    setPixel(StartPoint + i, red, green, blue);
+    setPixel(Start2ndEye + i, red, green, blue);
+  }
+  
+  showStrip();
+  if(tick()) return;
+  
+  if(Fade==true) {
+    float r, g, b;
+  
+    for(int j = Steps; j >= 0; j--) {
+      r = j*(red/Steps);
+      g = j*(green/Steps);
+      b = j*(blue/Steps);
+      
+      for(i = 0; i < EyeWidth; i++) {
+        setPixel(StartPoint + i, r, g, b);
+        setPixel(Start2ndEye + i, r, g, b);
+      }
+      
+      showStrip();
+      if(tick()) return;
+      delay(FadeDelay);
+    }
+  }
+  
+  setAll(0,0,0); // Set all black
+  
+  delay(EndPause);
+}
+
+void CylonBounce(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay){
+
+  for(int i = 0; i < NUM_LEDS-EyeSize-2; i++) {
+    setAll(0,0,0);
+    setPixel(i, red/10, green/10, blue/10);
+    for(int j = 1; j <= EyeSize; j++) {
+      setPixel(i+j, red, green, blue); 
+    }
+    setPixel(i+EyeSize+1, red/10, green/10, blue/10);
+    showStrip();
+    if(tick()) return;
+    delay(SpeedDelay);
+  }
+
+  delay(ReturnDelay);
+
+  for(int i = NUM_LEDS-EyeSize-2; i > 0; i--) {
+    setAll(0,0,0);
+    setPixel(i, red/10, green/10, blue/10);
+    for(int j = 1; j <= EyeSize; j++) {
+      setPixel(i+j, red, green, blue); 
+    }
+    setPixel(i+EyeSize+1, red/10, green/10, blue/10);
+    showStrip();
+    if(tick()) return;
+    delay(SpeedDelay);
+  }
+  
+  delay(ReturnDelay);
+}
+
+void NewKITT(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay){
+  RightToLeft(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+  LeftToRight(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+  OutsideToCenter(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+  CenterToOutside(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+  LeftToRight(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+  RightToLeft(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+  OutsideToCenter(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+  CenterToOutside(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+}
+
+// used by NewKITT
+void CenterToOutside(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay) {
+  for(int i =((NUM_LEDS-EyeSize)/2); i>=0; i--) {
+    setAll(0,0,0);
+    
+    setPixel(i, red/10, green/10, blue/10);
+    for(int j = 1; j <= EyeSize; j++) {
+      setPixel(i+j, red, green, blue); 
+    }
+    setPixel(i+EyeSize+1, red/10, green/10, blue/10);
+    
+    setPixel(NUM_LEDS-i, red/10, green/10, blue/10);
+    for(int j = 1; j <= EyeSize; j++) {
+      setPixel(NUM_LEDS-i-j, red, green, blue); 
+    }
+    setPixel(NUM_LEDS-i-EyeSize-1, red/10, green/10, blue/10);
+    
+    showStrip();
+    if(tick()) return;
+    delay(SpeedDelay);
+  }
+  delay(ReturnDelay);
+}
+
+// used by NewKITT
+void OutsideToCenter(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay) {
+  for(int i = 0; i<=((NUM_LEDS-EyeSize)/2); i++) {
+    setAll(0,0,0);
+    
+    setPixel(i, red/10, green/10, blue/10);
+    for(int j = 1; j <= EyeSize; j++) {
+      setPixel(i+j, red, green, blue); 
+    }
+    setPixel(i+EyeSize+1, red/10, green/10, blue/10);
+    
+    setPixel(NUM_LEDS-i, red/10, green/10, blue/10);
+    for(int j = 1; j <= EyeSize; j++) {
+      setPixel(NUM_LEDS-i-j, red, green, blue); 
+    }
+    setPixel(NUM_LEDS-i-EyeSize-1, red/10, green/10, blue/10);
+    
+    showStrip();
+    if(tick()) return;
+    delay(SpeedDelay);
+  }
+  delay(ReturnDelay);
+}
+
+// used by NewKITT
+void LeftToRight(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay) {
+  for(int i = 0; i < NUM_LEDS-EyeSize-2; i++) {
+    setAll(0,0,0);
+    setPixel(i, red/10, green/10, blue/10);
+    for(int j = 1; j <= EyeSize; j++) {
+      setPixel(i+j, red, green, blue); 
+    }
+    setPixel(i+EyeSize+1, red/10, green/10, blue/10);
+    showStrip();
+    if(tick()) return;
+    delay(SpeedDelay);
+  }
+  delay(ReturnDelay);
+}
+
+// used by NewKITT
+void RightToLeft(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay) {
+  for(int i = NUM_LEDS-EyeSize-2; i > 0; i--) {
+    setAll(0,0,0);
+    setPixel(i, red/10, green/10, blue/10);
+    for(int j = 1; j <= EyeSize; j++) {
+      setPixel(i+j, red, green, blue); 
+    }
+    setPixel(i+EyeSize+1, red/10, green/10, blue/10);
+    showStrip();
+    if(tick()) return;
+    delay(SpeedDelay);
+  }
+  delay(ReturnDelay);
+}
+
+void Twinkle(byte red, byte green, byte blue, int Count, int SpeedDelay, boolean OnlyOne) {
+  setAll(0,0,0);
+  
+  for (int i=0; i<Count; i++) {
+     setPixel(random(NUM_LEDS),red,green,blue);
+     showStrip();
+     if(tick()) return;
+     delay(SpeedDelay);
+     if(OnlyOne) { 
+       setAll(0,0,0); 
+     }
+   }
+  
+  delay(SpeedDelay);
+}
+
+void TwinkleRandom(int Count, int SpeedDelay, boolean OnlyOne) {
+  setAll(0,0,0);
+  
+  for (int i=0; i<Count; i++) {
+     setPixel(random(NUM_LEDS),random(0,255),random(0,255),random(0,255));
+     showStrip();
+     if(tick()) return;
+     delay(SpeedDelay);
+     if(OnlyOne) { 
+       setAll(0,0,0); 
+     }
+   }
+  
+  delay(SpeedDelay);
+}
+
+void Sparkle(byte red, byte green, byte blue, int SpeedDelay) {
+  int Pixel = random(NUM_LEDS);
+  setPixel(Pixel,red,green,blue);
+  showStrip();
+  if(tick()) return;
+  delay(SpeedDelay);
+  setPixel(Pixel,0,0,0);
+}
+
+void SnowSparkle(byte red, byte green, byte blue, int SparkleDelay, int SpeedDelay) {
+  setAll(red,green,blue);
+  
+  int Pixel = random(NUM_LEDS);
+  setPixel(Pixel,0xff,0xff,0xff);
+  showStrip();
+  if(tick()) return;
+  delay(SparkleDelay);
+  setPixel(Pixel,red,green,blue);
+  showStrip();
+  if(tick()) return;
+  delay(SpeedDelay);
+}
+
+void RunningLights(byte red, byte green, byte blue, int WaveDelay) {
+  int Position=0;
+  
+  for(int i=0; i<NUM_LEDS*2; i++)
+  {
+      Position++; // = 0; //Position + Rate;
+      for(int i=0; i<NUM_LEDS; i++) {
+        // sine wave, 3 offset waves make a rainbow!
+        //float level = sin(i+Position) * 127 + 128;
+        //setPixel(i,level,0,0);
+        //float level = sin(i+Position) * 127 + 128;
+        setPixel(i,((sin(i+Position) * 127 + 128)/255)*red,
+                   ((sin(i+Position) * 127 + 128)/255)*green,
+                   ((sin(i+Position) * 127 + 128)/255)*blue);
+      }
+      
+      showStrip();
+      if(tick()) return;
+      delay(WaveDelay);
+  }
+}
+
+void colorWipe(byte red, byte green, byte blue, int SpeedDelay) {
+  for(uint16_t i=0; i<NUM_LEDS; i++) {
+      setPixel(i, red, green, blue);
+      showStrip();
+      if(tick()) return;
+      delay(SpeedDelay);
+  }
+}
+
+void rainbowCycle(int SpeedDelay) {
+  byte *c;
+  uint16_t i, j;
+
+  for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
+    for(i=0; i< NUM_LEDS; i++) {
+      c=Wheel(((i * 256 / NUM_LEDS) + j) & 255);
+      setPixel(i, *c, *(c+1), *(c+2));
+    }
+    showStrip();
+    if(tick()) return;
+    delay(SpeedDelay);
+  }
+}
+
+// used by rainbowCycle and theaterChaseRainbow
+byte * Wheel(byte WheelPos) {
+  static byte c[3];
+  
+  if(WheelPos < 85) {
+   c[0]=WheelPos * 3;
+   c[1]=255 - WheelPos * 3;
+   c[2]=0;
+  } else if(WheelPos < 170) {
+   WheelPos -= 85;
+   c[0]=255 - WheelPos * 3;
+   c[1]=0;
+   c[2]=WheelPos * 3;
+  } else {
+   WheelPos -= 170;
+   c[0]=0;
+   c[1]=WheelPos * 3;
+   c[2]=255 - WheelPos * 3;
+  }
+
+  return c;
+}
+
+void theaterChase(byte red, byte green, byte blue, int SpeedDelay) {
+  for (int j=0; j<10; j++) {  //do 10 cycles of chasing
+    for (int q=0; q < 3; q++) {
+      for (int i=0; i < NUM_LEDS; i=i+3) {
+        setPixel(i+q, red, green, blue);    //turn every third pixel on
+      }
+      showStrip();
+      if(tick()) return;
+     
+      delay(SpeedDelay);
+     
+      for (int i=0; i < NUM_LEDS; i=i+3) {
+        setPixel(i+q, 0,0,0);        //turn every third pixel off
       }
     }
   }
 }
 
-// Input a value 0 to 255 to get a color value.
-// The colours are a transition r - g - b - back to r.
-uint32_t Wheel(byte WheelPos) {
-  WheelPos = 255 - WheelPos;
-  if(WheelPos < 85) {
-    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+void theaterChaseRainbow(int SpeedDelay) {
+  byte *c;
+  
+  for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
+    for (int q=0; q < 3; q++) {
+        for (int i=0; i < NUM_LEDS; i=i+3) {
+          c = Wheel( (i+j) % 255);
+          setPixel(i+q, *c, *(c+1), *(c+2));    //turn every third pixel on
+        }
+        showStrip();
+        if(tick()) return;
+       
+        delay(SpeedDelay);
+       
+        for (int i=0; i < NUM_LEDS; i=i+3) {
+          setPixel(i+q, 0,0,0);        //turn every third pixel off
+        }
+    }
   }
-  if(WheelPos < 170) {
-    WheelPos -= 85;
-    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+}
+
+void Fire(int Cooling, int Sparking, int SpeedDelay) {
+  static byte heat[NUM_LEDS];
+  int cooldown;
+  
+  // Step 1.  Cool down every cell a little
+  for( int i = 0; i < NUM_LEDS; i++) {
+    cooldown = random(0, ((Cooling * 10) / NUM_LEDS) + 2);
+    
+    if(cooldown>heat[i]) {
+      heat[i]=0;
+    } else {
+      heat[i]=heat[i]-cooldown;
+    }
   }
-  WheelPos -= 170;
-  return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+  
+  // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+  for( int k= NUM_LEDS - 1; k >= 2; k--) {
+    heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
+  }
+    
+  // Step 3.  Randomly ignite new 'sparks' near the bottom
+  if( random(255) < Sparking ) {
+    int y = random(7);
+    heat[y] = heat[y] + random(160,255);
+    //heat[y] = random(160,255);
+  }
+
+  // Step 4.  Convert heat to LED colors
+  for( int j = 0; j < NUM_LEDS; j++) {
+    setPixelHeatColor(j, heat[j] );
+  }
+
+  showStrip();
+  if(tick()) return;
+  delay(SpeedDelay);
+}
+
+void setPixelHeatColor (int Pixel, byte temperature) {
+  // Scale 'heat' down from 0-255 to 0-191
+  byte t192 = round((temperature/255.0)*191);
+ 
+  // calculate ramp up from
+  byte heatramp = t192 & 0x3F; // 0..63
+  heatramp <<= 2; // scale up to 0..252
+ 
+  // figure out which third of the spectrum we're in:
+  if( t192 > 0x80) {                     // hottest
+    setPixel(Pixel, 255, 255, heatramp);
+  } else if( t192 > 0x40 ) {             // middle
+    setPixel(Pixel, 255, heatramp, 0);
+  } else {                               // coolest
+    setPixel(Pixel, heatramp, 0, 0);
+  }
+}
+
+void BouncingColoredBalls(int BallCount, byte colors[][3], boolean continuous) {
+  float Gravity = -9.81;
+  int StartHeight = 1;
+  
+  float Height[BallCount];
+  float ImpactVelocityStart = sqrt( -2 * Gravity * StartHeight );
+  float ImpactVelocity[BallCount];
+  float TimeSinceLastBounce[BallCount];
+  int   Position[BallCount];
+  long  ClockTimeSinceLastBounce[BallCount];
+  float Dampening[BallCount];
+  boolean ballBouncing[BallCount];
+  boolean ballsStillBouncing = true;
+  
+  for (int i = 0 ; i < BallCount ; i++) {   
+    ClockTimeSinceLastBounce[i] = millis();
+    Height[i] = StartHeight;
+    Position[i] = 0; 
+    ImpactVelocity[i] = ImpactVelocityStart;
+    TimeSinceLastBounce[i] = 0;
+    Dampening[i] = 0.90 - float(i)/pow(BallCount,2);
+    ballBouncing[i]=true; 
+  }
+
+  while (ballsStillBouncing) {
+    for (int i = 0 ; i < BallCount ; i++) {
+      TimeSinceLastBounce[i] =  millis() - ClockTimeSinceLastBounce[i];
+      Height[i] = 0.5 * Gravity * pow( TimeSinceLastBounce[i]/1000 , 2.0 ) + ImpactVelocity[i] * TimeSinceLastBounce[i]/1000;
+  
+      if ( Height[i] < 0 ) {                      
+        Height[i] = 0;
+        ImpactVelocity[i] = Dampening[i] * ImpactVelocity[i];
+        ClockTimeSinceLastBounce[i] = millis();
+  
+        if ( ImpactVelocity[i] < 0.01 ) {
+          if (continuous) {
+            ImpactVelocity[i] = ImpactVelocityStart;
+          } else {
+            ballBouncing[i]=false;
+          }
+        }
+      }
+      Position[i] = round( Height[i] * (NUM_LEDS - 1) / StartHeight);
+    }
+
+    ballsStillBouncing = false; // assume no balls bouncing
+    for (int i = 0 ; i < BallCount ; i++) {
+      setPixel(Position[i],colors[i][0],colors[i][1],colors[i][2]);
+      if ( ballBouncing[i] ) {
+        ballsStillBouncing = true;
+      }
+    }
+    
+    showStrip();
+    if(tick()) return;
+    setAll(0,0,0);
+  }
+}
+
+void meteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTrailDecay, boolean meteorRandomDecay, int SpeedDelay) {  
+  setAll(0,0,0);
+  
+  for(int i = 0; i < NUM_LEDS+NUM_LEDS; i++) {
+    
+    
+    // fade brightness all LEDs one step
+    for(int j=0; j<NUM_LEDS; j++) {
+      if( (!meteorRandomDecay) || (random(10)>5) ) {
+        fadeToBlack(j, meteorTrailDecay );        
+      }
+    }
+    
+    // draw meteor
+    for(int j = 0; j < meteorSize; j++) {
+      if( ( i-j <NUM_LEDS) && (i-j>=0) ) {
+        setPixel(i-j, red, green, blue);
+      } 
+    }
+   
+    showStrip();
+    if(tick()) return;
+    delay(SpeedDelay);
+  }
+}
+
+// used by meteorrain
+void fadeToBlack(int ledNo, byte fadeValue) {
+ #ifdef ADAFRUIT_NEOPIXEL_H 
+    // NeoPixel
+    uint32_t oldColor;
+    uint8_t r, g, b;
+    int value;
+    
+    oldColor = strip.getPixelColor(ledNo);
+    r = (oldColor & 0x00ff0000UL) >> 16;
+    g = (oldColor & 0x0000ff00UL) >> 8;
+    b = (oldColor & 0x000000ffUL);
+
+    r=(r<=10)? 0 : (int) r-(r*fadeValue/256);
+    g=(g<=10)? 0 : (int) g-(g*fadeValue/256);
+    b=(b<=10)? 0 : (int) b-(b*fadeValue/256);
+    
+    strip.setPixelColor(ledNo, r,g,b);
+ #endif
+ #ifndef ADAFRUIT_NEOPIXEL_H
+   // FastLED
+   leds[ledNo].fadeToBlackBy( fadeValue );
+ #endif  
+}
+
+// *** REPLACE TO HERE ***
+
+// ***************************************
+// ** FastLed/NeoPixel Common Functions **
+// ***************************************
+
+boolean tick() {
+  loop();
+  if(effectChanged) {
+    effectChanged = false;
+    return true;
+  }
+  return false;
+}
+
+// Apply LED color changes
+void showStrip() {
+ #ifdef ADAFRUIT_NEOPIXEL_H 
+   // NeoPixel
+   strip.show();
+ #else
+   // FastLED
+   FastLED.show();
+ #endif
+}
+
+// Set a LED color (not yet visible)
+void setPixel(int Pixel, byte red, byte green, byte blue) {
+ #ifdef ADAFRUIT_NEOPIXEL_H 
+   // NeoPixel
+   strip.setPixelColor(Pixel, strip.Color(red, green, blue));
+ #else
+   // FastLED
+   leds[Pixel].r = red;
+   leds[Pixel].g = green;
+   leds[Pixel].b = blue;
+ #endif
+}
+
+// Set all LEDs to a given color and apply it (visible)
+void setAll(byte red, byte green, byte blue) {
+  for(int i = 0; i < NUM_LEDS; i++ ) {
+    setPixel(i, red, green, blue); 
+  }
+  showStrip();
 }
