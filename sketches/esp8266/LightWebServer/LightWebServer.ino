@@ -139,6 +139,9 @@ void loop(void) {
       case 19: eBPM(); break;
       case 20: eSinelon(); break;
       case 21: eConfetti(10); break;
+      //case 22: eLightning(500); break;
+      //case 23: eRing(500); break;
+      //case 24: eDrop(500); break;
       case 22: eFire(55,120,15); break;
     }
     inProgress = false;
@@ -226,7 +229,7 @@ void handle_Status() {
 
 void handle_SwitchEffect() {
   selectedEffect++;
-  if(selectedEffect>23) { 
+  if(selectedEffect>26) { 
     selectedEffect=0;
   }
   EEPROM.put(0, selectedEffect);
@@ -423,44 +426,17 @@ void eHalloweenEyes(byte red, byte green, byte blue, int EyeWidth, int EyeSpace,
 
 // CylonBounce - Color (red, green, blue), eye size, speed delay, end pause
 void eCylonBounce(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay){
-
-  for(int i = 0; i < NUM_LEDS-EyeSize-2; i++) {
-    setAll(0,0,0);
-    setPixel(i, red/10, green/10, blue/10);
-    for(int j = 1; j <= EyeSize; j++) {
-      setPixel(i+j, red, green, blue); 
-    }
-    setPixel(i+EyeSize+1, red/10, green/10, blue/10);
-    showStrip();
-    if(tick()) return;
-    delay(SpeedDelay);
-  }
-
-  delay(ReturnDelay);
-
-  for(int i = NUM_LEDS-EyeSize-2; i > 0; i--) {
-    setAll(0,0,0);
-    setPixel(i, red/10, green/10, blue/10);
-    for(int j = 1; j <= EyeSize; j++) {
-      setPixel(i+j, red, green, blue); 
-    }
-    setPixel(i+EyeSize+1, red/10, green/10, blue/10);
-    showStrip();
-    if(tick()) return;
-    delay(SpeedDelay);
-  }
-  
-  delay(ReturnDelay);
+  RightToLeft(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+  LeftToRight(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
 }
 
-// NewKITT - Color (red, green, blue), eye size, speed delay, end pause
 void eNewKITT(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay){
-  LeftRight(true, red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
-  LeftRight(false, red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+  RightToLeft(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+  LeftToRight(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
   OutsideToCenter(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
   CenterToOutside(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
-  LeftRight(true, red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
-  LeftRight(false, red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+  LeftToRight(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+  RightToLeft(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
   OutsideToCenter(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
   CenterToOutside(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
 }
@@ -514,14 +490,24 @@ void OutsideToCenter(byte red, byte green, byte blue, int EyeSize, int SpeedDela
 }
 
 // used by NewKITT
-void LeftRight(boolean dir, byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay) {
-  int edge1, edge2, inc;
-  if(dir == true) {
-    edge1 = 0; edge2 = NUM_LEDS-EyeSize-2; inc = 1;
-  } else {
-    edge1 = NUM_LEDS-EyeSize-2; edge2 = 0; inc = -1; 
+void LeftToRight(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay) {
+  for(int i = 0; i < NUM_LEDS-EyeSize-2; i++) {
+    setAll(0,0,0);
+    setPixel(i, red/10, green/10, blue/10);
+    for(int j = 1; j <= EyeSize; j++) {
+      setPixel(i+j, red, green, blue); 
+    }
+    setPixel(i+EyeSize+1, red/10, green/10, blue/10);
+    showStrip();
+    if(tick()) return;
+    delay(SpeedDelay);
   }
-  for(int i = edge1; i < edge2; i=i+inc) {
+  delay(ReturnDelay);
+}
+
+// used by NewKITT
+void RightToLeft(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay) {
+  for(int i = NUM_LEDS-EyeSize-2; i > 0; i--) {
     setAll(0,0,0);
     setPixel(i, red/10, green/10, blue/10);
     for(int j = 1; j <= EyeSize; j++) {
@@ -870,7 +856,73 @@ void eJuggle() {
     if(tick()) return;
   }
 }
+/*
+void eDrop(uint8_t wait) {
+  while(true) {
+    uint16_t i, j;
+  
+    for(j=0; j<50; j++) {
+      int start = random(0, NUM_LEDS);
+      int direction = (random(0,10) < 5) ? -1 : 1;
+      int length = random(5, 30);
+      
+      for(i=0; i<length+10; i++) {
+        if(i < length) setPixel(i*direction+start, random(0,4)*60, random(0,4)*60, random(0,4)*60);
+        setPixel((i-10)*direction+start, 0, 0, 0);
+        showStrip();
+        if(tick()) return;
+        delay(1);
+      }
+     
+      delay(wait);
+    }
+  }
+}
 
+void eRing(uint8_t wait) {
+  while(true) {
+    uint16_t i, j;
+  
+    for(j=0; j<2; j++) {
+      int start = 300;
+      for(i=0; i<=24; i++) {
+        setPixel(i+start, 0,0,127);
+        setPixel((i-1)+start, 0, 0, 0);
+        showStrip();
+        if(tick()) return;
+        delay(50);
+      }   
+      delay(wait);
+    }
+  }
+}
+
+void eLightning(uint8_t wait) {
+  while(true) {
+    uint16_t i, j;
+  
+    for(j=0; j<3; j++) {
+      
+      int direction = 1; //(random(0,10) < 5) ? -1 : 1;
+      int start = (direction==-1) ? NUM_LEDS : 0;
+      
+      //int color = strip.Color(random(0,4)*60, random(0,4)*60, random(0,4)*60);
+      
+      for(i=0; i < NUM_LEDS; i=i+10) {
+        for(int j=0; j <10; j++) {
+          setPixel((i+j)*direction+start, 0,0,127);
+          setPixel(((i+j)-10)*direction+start, 0, 0, 0);
+        }
+        showStrip();
+        if(tick()) return;
+        //delay(1);
+      }
+     
+      delay(wait);
+    }
+  }
+}
+*/
 // ***************************************
 // ** FastLed/NeoPixel Common Functions **
 // ***************************************
