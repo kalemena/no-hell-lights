@@ -1,4 +1,7 @@
-#include <Adafruit_NeoPixel.h>
+#define FASTLED_ALLOW_INTERRUPTS 0
+#include "FastLED.h"
+//#include <Adafruit_NeoPixel.h>
+
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
@@ -20,11 +23,10 @@
 
 // ==== STATIC
 
-#define SCENE_THEATER_CHASE_RAINBOW "theaterchaserainbow"
-
 // ===== SETUP
 ESP8266WebServer server(80);
 
+#ifdef ADAFRUIT_NEOPIXEL_H 
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = Arduino pin number (most are valid)
 // Parameter 3 = pixel type flags, add together as needed:
@@ -33,6 +35,9 @@ ESP8266WebServer server(80);
 //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LED_PIN, NEO_RGB + NEO_KHZ800);
+#else
+CRGB leds[NUM_LEDS];
+#endif
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
@@ -43,14 +48,23 @@ boolean inProgress = false;
 byte selectedEffect=0;
 boolean effectChanged = false;
 
+typedef void (*PatternList[])();
+PatternList gPatterns = { eBouncingColoredBalls, eMeteorRain };
+
+uint8_t gHue = 0; // rotating "base color" used by many of the patterns
+
 void setup(void) {
   Serial.begin(115200);
   
   Serial.println();
   Serial.println("WS2812 initializing");
-  strip.setBrightness(LED_BRIGHTNESS);
-  strip.begin();
-  strip.show(); // Initialize all pixels to 'off'
+  #ifdef ADAFRUIT_NEOPIXEL_H 
+    strip.setBrightness(LED_BRIGHTNESS);
+    strip.begin();
+    strip.show(); // Initialize all pixels to 'off'
+  #else
+    FastLED.addLeds<WS2811, LED_PIN, GRB>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  #endif
   delay(50);
   
   pinMode(STATUS_LED, OUTPUT);
@@ -104,154 +118,78 @@ void loop(void) {
   // waiting fo a client
   server.handleClient();
 
+  EVERY_N_MILLISECONDS( 20 ) { gHue++; }
+  // EVERY_N_SECONDS( 10 ) { nextPattern(); } // change patterns periodically
+
   if(inProgress == false) {
     // record last effect
     EEPROM.get(0,selectedEffect);
-    if(selectedEffect>18) { 
-      selectedEffect=0;
-      EEPROM.put(0,0); 
-    }
     
     inProgress = true;
     switch(selectedEffect) {
-    
-    case 0  : {
-                // RGBLoop - no parameters
-                RGBLoop();
-                break;
-              }
-
-    case 1  : {
-                // FadeInOut - Color (red, green. blue)
-                FadeInOut(0xff, 0x00, 0x00); // red
-                FadeInOut(0xff, 0xff, 0xff); // white 
-                FadeInOut(0x00, 0x00, 0xff); // blue
-                break;
-              }
-              
-    case 2  : {
-                // Strobe - Color (red, green, blue), number of flashes, flash speed, end pause
-                Strobe(0xff, 0xff, 0xff, 10, 50, 1000);
-                break;
-              }
-
-    case 3  : {
-                // HalloweenEyes - Color (red, green, blue), Size of eye, space between eyes, fade (true/false), steps, fade delay, end pause
-                HalloweenEyes(0xff, 0x00, 0x00, 
-                              1, 4, 
-                              true, random(5,50), random(50,150), 
-                              random(1000, 10000));
-                HalloweenEyes(0xff, 0x00, 0x00, 
-                              1, 4, 
-                              true, random(5,50), random(50,150), 
-                              random(1000, 10000));
-                break;
-              }
-              
-    case 4  : {
-                // CylonBounce - Color (red, green, blue), eye size, speed delay, end pause
-                CylonBounce(0xff, 0x00, 0x00, 4, 10, 50);
-                break;
-              }
-              
-    case 5  : {
-                // NewKITT - Color (red, green, blue), eye size, speed delay, end pause
-                NewKITT(0xff, 0x00, 0x00, 8, 10, 50);
-                break;
-              }
-              
-    case 6  : {
-                // Twinkle - Color (red, green, blue), count, speed delay, only one twinkle (true/false) 
-                Twinkle(0xff, 0x00, 0x00, 10, 100, false);
-                break;
-              }
-              
-    case 7  : { 
-                // TwinkleRandom - twinkle count, speed delay, only one (true/false)
-                TwinkleRandom(20, 100, false);
-                break;
-              }
-              
-    case 8  : {
-                // Sparkle - Color (red, green, blue), speed delay
-                Sparkle(0xff, 0xff, 0xff, 0);
-                break;
-              }
-               
-    case 9  : {
-                // SnowSparkle - Color (red, green, blue), sparkle delay, speed delay
-                SnowSparkle(0x10, 0x10, 0x10, 20, random(100,1000));
-                break;
-              }
-              
-    case 10 : {
-                // Running Lights - Color (red, green, blue), wave dealy
-                RunningLights(0xff,0x00,0x00, 50);  // red
-                RunningLights(0xff,0xff,0xff, 50);  // white
-                RunningLights(0x00,0x00,0xff, 50);  // blue
-                break;
-              }
-              
-    case 11 : {
-                // colorWipe - Color (red, green, blue), speed delay
-                colorWipe(0x00,0xff,0x00, 50);
-                colorWipe(0x00,0x00,0x00, 50);
-                break;
-              }
-
-    case 12 : {
-                // rainbowCycle - speed delay
-                rainbowCycle(20);
-                break;
-              }
-
-    case 13 : {
-                // theatherChase - Color (red, green, blue), speed delay
-                theaterChase(0xff,0,0,50);
-                break;
-              }
-
-    case 14 : {
-                // theaterChaseRainbow - Speed delay
-                theaterChaseRainbow(50);
-                break;
-              }
-
-    case 15 : {
-                // Fire - Cooling rate, Sparking rate, speed delay
-                Fire(55,120,15);
-                break;
-              }
-
-
-              // simple bouncingBalls not included, since BouncingColoredBalls can perform this as well as shown below
-              // BouncingColoredBalls - Number of balls, color (red, green, blue) array, continuous
-              // CAUTION: If set to continuous then this effect will never stop!!! 
-              
-    case 16 : {
-                // mimic BouncingBalls
-                byte onecolor[1][3] = { {0xff, 0x00, 0x00} };
-                BouncingColoredBalls(1, onecolor, false);
-                break;
-              }
-
-    case 17 : {
-                // multiple colored balls
-                byte colors[3][3] = { {0xff, 0x00, 0x00}, 
-                                      {0xff, 0xff, 0xff}, 
-                                      {0x00, 0x00, 0xff} };
-                BouncingColoredBalls(3, colors, false);
-                break;
-              }
-
-    case 18 : {
-                // meteorRain - Color (red, green, blue), meteor size, trail decay, random trail decay (true/false), speed delay 
-                meteorRain(0xff,0xff,0xff,10, 64, true, 30);
-                break;
-              }
+      case 0: RGBLoop(); break;
+      case 1: FadeInOut(0xff, 0x00, 0x00); FadeInOut(0xff, 0xff, 0xff); FadeInOut(0x00, 0x00, 0xff); break;
+      case 2: Strobe(0xff, 0xff, 0xff, 10, 50, 1000); break;
+      case 3: HalloweenEyes(0xff, 0x00, 0x00, 1, 4, true, random(5,50), random(50,150), random(1000, 10000));
+            HalloweenEyes(0xff, 0x00, 0x00, 1, 4, true, random(5,50), random(50,150), random(1000, 10000));
+            break;
+      case 4: // CylonBounce - Color (red, green, blue), eye size, speed delay, end pause
+              CylonBounce(0xff, 0x00, 0x00, 4, 10, 50);
+              break;              
+      case 5: // NewKITT - Color (red, green, blue), eye size, speed delay, end pause
+              NewKITT(0xff, 0x00, 0x00, 8, 10, 50);
+              break;
+      case 6: Twinkle(0xff, 0x00, 0x00, 10, 100, false); break;
+      case 7: TwinkleRandom(20, 100, false); break;
+      case 8: Sparkle(0xff, 0xff, 0xff, 0); break;
+      case 9: SnowSparkle(0x10, 0x10, 0x10, 20, random(100,1000)); break;
+      case 10: RunningLights(0xff,0x00,0x00, 50); RunningLights(0xff,0xff,0xff, 50); RunningLights(0x00,0x00,0xff, 50); break;
+      case 11: colorWipe(0x00,0xff,0x00, 50); colorWipe(0x00,0x00,0x00, 50); break;
+      case 12: rainbowCycle(20,80); break;
+      case 13: theaterChaseRainbow(false, 0xff,0,0,50); break;
+      case 14: theaterChaseRainbow(true, 0,0,0, 50); break;
+      case 15: eBouncingColoredBalls(); break;
+      case 16: eBouncingColoredBallsMC(); break;
+      case 17: eMeteorRain(); break;
+      case 18: juggle(); break;
+      case 19: bpm(); break;
+      case 20: sinelon(); break;
+      case 21: confetti(10); break;
+      case 22: Fire(55,120,15); break;
     }
     inProgress = false;
   }
+}
+
+boolean tick() {
+  loop();
+  if(effectChanged) {
+    effectChanged = false;
+    return true;
+  }
+  return false;
+}
+
+// simple bouncingBalls not included, since BouncingColoredBalls can perform this as well as shown below
+// BouncingColoredBalls - Number of balls, color (red, green, blue) array, continuous
+// CAUTION: If set to continuous then this effect will never stop!!! 
+void eBouncingColoredBalls() {
+  // mimic BouncingBalls
+  byte onecolor[1][3] = { {0xff, 0x00, 0x00} };
+  BouncingColoredBalls(1, onecolor, false);
+}
+
+void eBouncingColoredBallsMC() {
+  // multiple colored balls
+  byte colors[3][3] = { {0xff, 0x00, 0x00}, 
+                        {0xff, 0xff, 0xff}, 
+                        {0x00, 0x00, 0xff} };
+  BouncingColoredBalls(3, colors, false);
+}
+
+void eMeteorRain() {
+  // meteorRain - Color (red, green, blue), meteor size, trail decay, random trail decay (true/false), speed delay 
+  effect_MeteorRain(0xff,0xff,0xff,10, 64, true, 30);
 }
 
 // ==== Tools
@@ -326,6 +264,9 @@ void handle_Status() {
 
 void handle_SwitchEffect() {
   selectedEffect++;
+  if(selectedEffect>23) { 
+    selectedEffect=0;
+  }
   EEPROM.put(0, selectedEffect);
   effectChanged = true;
 
@@ -340,7 +281,7 @@ void handle_SwitchEffect() {
 // ** LEDEffect Functions **
 // *************************
 
-void RGBLoop(){
+void RGBLoop() {
   for(int j = 0; j < 3; j++ ) { 
     // Fade IN
     for(int k = 0; k < 256; k++) { 
@@ -367,7 +308,7 @@ void RGBLoop(){
   }
 }
 
-void FadeInOut(byte red, byte green, byte blue){
+void FadeInOut(byte red, byte green, byte blue) {
   float r, g, b;
       
   for(int k = 0; k < 256; k=k+1) { 
@@ -389,7 +330,7 @@ void FadeInOut(byte red, byte green, byte blue){
   }
 }
 
-void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, int EndPause){
+void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, int EndPause) {
   for(int j = 0; j < StrobeCount; j++) {
     setAll(red,green,blue);
     showStrip();
@@ -404,10 +345,8 @@ void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, in
  delay(EndPause);
 }
 
-void HalloweenEyes(byte red, byte green, byte blue, 
-                   int EyeWidth, int EyeSpace, 
-                   boolean Fade, int Steps, int FadeDelay,
-                   int EndPause){
+// HalloweenEyes - Color (red, green, blue), Size of eye, space between eyes, fade (true/false), steps, fade delay, end pause
+void HalloweenEyes(byte red, byte green, byte blue, int EyeWidth, int EyeSpace, boolean Fade, int Steps, int FadeDelay, int EndPause) {
   randomSeed(analogRead(0));
   
   int i;
@@ -654,7 +593,17 @@ void colorWipe(byte red, byte green, byte blue, int SpeedDelay) {
   }
 }
 
-void rainbowCycle(int SpeedDelay) {
+void addGlitter(int chanceOfGlitter) {
+  if( random(255) < chanceOfGlitter) {
+    #ifdef ADAFRUIT_NEOPIXEL_H
+      // TODO 
+    #else
+      leds[ random16(NUM_LEDS) ] += CRGB::White;
+    #endif
+  }
+}
+
+void rainbowCycle(int SpeedDelay, int chanceOfGlitter) {
   byte *c;
   uint16_t i, j;
 
@@ -663,6 +612,8 @@ void rainbowCycle(int SpeedDelay) {
       c=Wheel(((i * 256 / NUM_LEDS) + j) & 255);
       setPixel(i, *c, *(c+1), *(c+2));
     }
+    if(chanceOfGlitter > 0) 
+      addGlitter(chanceOfGlitter);
     showStrip();
     if(tick()) return;
     delay(SpeedDelay);
@@ -692,32 +643,18 @@ byte * Wheel(byte WheelPos) {
   return c;
 }
 
-void theaterChase(byte red, byte green, byte blue, int SpeedDelay) {
-  for (int j=0; j<10; j++) {  //do 10 cycles of chasing
-    for (int q=0; q < 3; q++) {
-      for (int i=0; i < NUM_LEDS; i=i+3) {
-        setPixel(i+q, red, green, blue);    //turn every third pixel on
-      }
-      showStrip();
-      if(tick()) return;
-     
-      delay(SpeedDelay);
-     
-      for (int i=0; i < NUM_LEDS; i=i+3) {
-        setPixel(i+q, 0,0,0);        //turn every third pixel off
-      }
-    }
-  }
-}
-
-void theaterChaseRainbow(int SpeedDelay) {
+void theaterChaseRainbow(boolean rainbow, byte red, byte green, byte blue, int SpeedDelay) {
   byte *c;
   
   for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
     for (int q=0; q < 3; q++) {
         for (int i=0; i < NUM_LEDS; i=i+3) {
-          c = Wheel( (i+j) % 255);
-          setPixel(i+q, *c, *(c+1), *(c+2));    //turn every third pixel on
+          if(rainbow) {
+            c = Wheel( (i+j) % 255);
+            setPixel(i+q, *c, *(c+1), *(c+2)); //turn every third pixel on
+          } else {
+            setPixel(i+q, red, green, blue); //turn every third pixel on
+          }
         }
         showStrip();
         if(tick()) return;
@@ -725,12 +662,13 @@ void theaterChaseRainbow(int SpeedDelay) {
         delay(SpeedDelay);
        
         for (int i=0; i < NUM_LEDS; i=i+3) {
-          setPixel(i+q, 0,0,0);        //turn every third pixel off
+          setPixel(i+q, 0,0,0); //turn every third pixel off
         }
     }
   }
 }
 
+// Fire - Cooling rate, Sparking rate, speed delay
 void Fire(int Cooling, int Sparking, int SpeedDelay) {
   static byte heat[NUM_LEDS];
   int cooldown;
@@ -845,12 +783,10 @@ void BouncingColoredBalls(int BallCount, byte colors[][3], boolean continuous) {
   }
 }
 
-void meteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTrailDecay, boolean meteorRandomDecay, int SpeedDelay) {  
+void effect_MeteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTrailDecay, boolean meteorRandomDecay, int SpeedDelay) {  
   setAll(0,0,0);
   
   for(int i = 0; i < NUM_LEDS+NUM_LEDS; i++) {
-    
-    
     // fade brightness all LEDs one step
     for(int j=0; j<NUM_LEDS; j++) {
       if( (!meteorRandomDecay) || (random(10)>5) ) {
@@ -889,27 +825,85 @@ void fadeToBlack(int ledNo, byte fadeValue) {
     b=(b<=10)? 0 : (int) b-(b*fadeValue/256);
     
     strip.setPixelColor(ledNo, r,g,b);
- #endif
- #ifndef ADAFRUIT_NEOPIXEL_H
+ #else
    // FastLED
    leds[ledNo].fadeToBlackBy( fadeValue );
  #endif  
 }
 
-// *** REPLACE TO HERE ***
+void confetti(int SpeedDelay) {
+  while(true) {
+    // random colored speckles that blink in and fade smoothly
+    #ifdef ADAFRUIT_NEOPIXEL_H
+      // TODO 
+    #else
+      fadeToBlackBy( leds, NUM_LEDS, 10);
+      int pos = random16(NUM_LEDS);
+      leds[pos] += CHSV( gHue + random8(64), 200, 255);
+    #endif
+    delay(SpeedDelay);
+    showStrip();
+    if(tick()) return;
+  }
+}
+
+void sinelon() {
+  while(true) {
+    // a colored dot sweeping back and forth, with fading trails
+    #ifdef ADAFRUIT_NEOPIXEL_H
+      // TODO 
+    #else
+      fadeToBlackBy( leds, NUM_LEDS, 20);
+      int pos = beatsin16( 13, 0, NUM_LEDS-1 );
+      leds[pos] += CHSV( gHue, 255, 192);
+    #endif
+    showStrip();
+    if(tick()) return;
+  }
+}
+
+void bpm() {
+  while(true) {
+    // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
+    uint8_t BeatsPerMinute = 62;
+    #ifdef ADAFRUIT_NEOPIXEL_H
+      // TODO 
+    #else
+      CRGBPalette16 palette = PartyColors_p;
+      uint8_t beat = beatsin8( BeatsPerMinute, 64, 255);
+      for( int i = 0; i < NUM_LEDS; i++) { //9948
+        leds[i] = ColorFromPalette(palette, gHue+(i*2), beat-gHue+(i*10));
+      }
+    #endif
+    showStrip();
+    if(tick()) return;
+  }
+}
+
+void juggle() {
+  while(true) {
+    // eight colored dots, weaving in and out of sync with each other
+    #ifdef ADAFRUIT_NEOPIXEL_H
+      for(int j=0; j<NUM_LEDS; j++) {
+        fadeToBlack(j, 20);
+      }
+      // TODO
+    #else
+      fadeToBlackBy( leds, NUM_LEDS, 20);
+      byte dothue = 0;
+      for( int i = 0; i < 8; i++) {
+        leds[beatsin16( i+7, 0, NUM_LEDS-1 )] |= CHSV(dothue, 200, 255);
+        dothue += 32;
+      }
+    #endif  
+    showStrip();
+    if(tick()) return;
+  }
+}
 
 // ***************************************
 // ** FastLed/NeoPixel Common Functions **
 // ***************************************
-
-boolean tick() {
-  loop();
-  if(effectChanged) {
-    effectChanged = false;
-    return true;
-  }
-  return false;
-}
 
 // Apply LED color changes
 void showStrip() {
