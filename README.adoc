@@ -57,6 +57,8 @@ Internal samples:
 
 ==== Resources
 
+* https://arduino-esp8266.readthedocs.io/en/latest/
+
 * https://github.com/FastLED/FastLED
 * https://github.com/adafruit/Adafruit_NeoPixel[Adafruit_NeoPixel]
 * https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/[Examples]
