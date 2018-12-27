@@ -13,37 +13,74 @@
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 #define MINVAL(A,B)   (((A) < (B)) ? (A) : (B))
 #define MAXVAL(A,B)   (((A) > (B)) ? (A) : (B))
-
-// ===== CONFIGURATION
-#include "settings-wifi.h"
-
-#define LED_PIN D2
-#define NUM_LEDS 60
-#define LED_BRIGHTNESS 90
-#define MILLI_AMPS         2000 // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
-
-#define STATUS_LED 13
-
 #define DEBUG true
 #define Serial if(DEBUG)Serial
 
-// ===== SETUP
+// ===== CONFIGURATION
+
+#include "settings.h"
+
 ESP8266WebServer server(80);
 
 #ifdef ADAFRUIT_NEOPIXEL_H 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LED_PIN, NEO_RGB + NEO_KHZ800);
+  Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LED_PIN, NEO_RGB + NEO_KHZ800);
 #else
-CRGB leds[NUM_LEDS];
+  CRGB leds[NUM_LEDS];
 #endif
 
 #include "effects.h"
 
+uint8_t currentEffectIndex = 0;
 boolean inProgress = false;
-byte selectedEffect=0;
 boolean effectChanged = false;
 
-typedef void (*PatternList[])();
-// PatternList gPatterns = { eBouncingColoredBalls, eMeteorRain };
+// ==== List of effects
+
+typedef void (*Effect)();
+typedef Effect Effects[];
+typedef struct {
+  Effect effect;
+  String name;
+} EffectDetail;
+typedef EffectDetail EffectDetails[];
+
+/*
+      case 1: eFadeInOut(0xff, 0x00, 0x00); eFadeInOut(0xff, 0xff, 0xff); eFadeInOut(0x00, 0x00, 0xff); break;
+      case 2: eStrobe(0xff, 0xff, 0xff, 10, 50, 1000); break;
+      case 3: eHalloweenEyes(0xff, 0x00, 0x00, 1, 4, true, random(5,50), random(50,150), random(1000, 10000));
+              eHalloweenEyes(0xff, 0x00, 0x00, 1, 4, true, random(5,50), random(50,150), random(1000, 10000));
+              break;
+      case 4: eCylonBounce(0xff, 0x00, 0x00, 4, 10, 50); break;              
+      case 5: eNewKITT(0xff, 0x00, 0x00, 8, 10, 50); break;
+      case 6: eTwinkle(0xff, 0x00, 0x00, 10, 100, false); break;
+      case 7: eTwinkleRandom(20, 100, false); break;
+      case 8: eSparkle(0xff, 0xff, 0xff, 0); break;
+      case 9: eSnowSparkle(0x10, 0x10, 0x10, 20, random(100,1000)); break;
+      case 10: eRunningLights(0xff,0x00,0x00, 50); eRunningLights(0xff,0xff,0xff, 50); eRunningLights(0x00,0x00,0xff, 50); break;
+      case 11: eColorWipe(0x00,0xff,0x00, 50); eColorWipe(0x00,0x00,0x00, 50); break;
+      case 12: eRainbowCycle(20,80); break;
+      case 13: eTheaterChase(false, 0xff,0,0,50); break;
+      case 14: eTheaterChase(true, 0,0,0, 50); break;
+      case 17: eMeteorRain(0xff,0xff,0xff,10, 64, true, 30); break;
+      case 21: eConfetti(10); break;
+      //case 22: eLightning(500); break;
+      //case 23: eRing(500); break;
+      //case 24: eDrop(500); break;
+*/
+EffectDetails effectDetails = {
+  //{ eFire,                  "Fire" },
+  { eRGBLoop,                 "RGB loop" },
+  { eJuggle,                  "Juggle" },
+  { eBPM,                     "BPM" },
+  { eSinelon,                 "Sinelon" },
+  { eBouncingColoredBalls,    "Bouncing Colored Balls" },
+  { eBouncingColoredBallsMC,  "Bouncing Colored Balls Multi-Color" },
+  { eCandle,                  "Candle" } 
+};
+
+const uint8_t effectDetailsCount = ARRAY_SIZE(effectDetails);
+
+// ==== SETUP and Main loop
 
 void setup(void) {
   Serial.begin(115200);
@@ -106,6 +143,8 @@ void setup(void) {
    
   server.onNotFound(handle_NotFound);
   server.begin();
+
+  Serial.println("Effects:" + String(effectDetailsCount));
   
   Serial.println("Service initialized");
 }
@@ -119,40 +158,10 @@ void loop(void) {
 
   if(inProgress == false) {
     // record last effect
-    EEPROM.get(0,selectedEffect);
+    EEPROM.get(0,currentEffectIndex);
     
     inProgress = true;
-    switch(selectedEffect) {
-      case 0: eCandle(); break;
-      case 1: eFadeInOut(0xff, 0x00, 0x00); eFadeInOut(0xff, 0xff, 0xff); eFadeInOut(0x00, 0x00, 0xff); break;
-      case 2: eStrobe(0xff, 0xff, 0xff, 10, 50, 1000); break;
-      case 3: eHalloweenEyes(0xff, 0x00, 0x00, 1, 4, true, random(5,50), random(50,150), random(1000, 10000));
-              eHalloweenEyes(0xff, 0x00, 0x00, 1, 4, true, random(5,50), random(50,150), random(1000, 10000));
-              break;
-      case 4: eCylonBounce(0xff, 0x00, 0x00, 4, 10, 50); break;              
-      case 5: eNewKITT(0xff, 0x00, 0x00, 8, 10, 50); break;
-      case 6: eTwinkle(0xff, 0x00, 0x00, 10, 100, false); break;
-      case 7: eTwinkleRandom(20, 100, false); break;
-      case 8: eSparkle(0xff, 0xff, 0xff, 0); break;
-      case 9: eSnowSparkle(0x10, 0x10, 0x10, 20, random(100,1000)); break;
-      case 10: eRunningLights(0xff,0x00,0x00, 50); eRunningLights(0xff,0xff,0xff, 50); eRunningLights(0x00,0x00,0xff, 50); break;
-      case 11: eColorWipe(0x00,0xff,0x00, 50); eColorWipe(0x00,0x00,0x00, 50); break;
-      case 12: eRainbowCycle(20,80); break;
-      case 13: eTheaterChase(false, 0xff,0,0,50); break;
-      case 14: eTheaterChase(true, 0,0,0, 50); break;
-      case 15: eBouncingColoredBalls(); break;
-      case 16: eBouncingColoredBallsMC(); break;
-      case 17: eMeteorRain(0xff,0xff,0xff,10, 64, true, 30); break;
-      case 18: eJuggle(); break;
-      case 19: eBPM(); break;
-      case 20: eSinelon(); break;
-      case 21: eConfetti(10); break;
-      //case 22: eLightning(500); break;
-      //case 23: eRing(500); break;
-      //case 24: eDrop(500); break;
-      case 22: eFire(55,120,15); break;
-      case 23: eRGBLoop(); break;
-    }
+    effectDetails[currentEffectIndex].effect();
     inProgress = false;
   }
 }
@@ -238,17 +247,20 @@ void handle_Status() {
 }
 
 void handle_SwitchEffect() {
-  selectedEffect++;
-  if(selectedEffect>26) { 
-    selectedEffect=0;
+  currentEffectIndex++;
+  if(currentEffectIndex >= effectDetailsCount) { 
+    currentEffectIndex = 0;
   }
-  EEPROM.put(0, selectedEffect);
+  EEPROM.put(0, currentEffectIndex);
   //EEPROM.write(0, selectedEffect);
   //EEPROM.commit();
   effectChanged = true;
 
   String json = "{\n";
-  json += " \"effect\":" + String(selectedEffect) + "\n";
+  json += " \"effect\":\n {\n";
+  json += "  \"index\":" + String(currentEffectIndex) + ",\n";
+  json += "  \"name\": \"" + String(effectDetails[currentEffectIndex].name) + "\"\n";
+  json += " }\n";
   json += "}";
   server.send(200, "application/json", json);
   json = String();
