@@ -44,38 +44,34 @@ typedef struct {
 } EffectDetail;
 typedef EffectDetail EffectDetails[];
 
-/*
-      case 1: eFadeInOut(0xff, 0x00, 0x00); eFadeInOut(0xff, 0xff, 0xff); eFadeInOut(0x00, 0x00, 0xff); break;
-      case 2: eStrobe(0xff, 0xff, 0xff, 10, 50, 1000); break;
-      case 3: eHalloweenEyes(0xff, 0x00, 0x00, 1, 4, true, random(5,50), random(50,150), random(1000, 10000));
-              eHalloweenEyes(0xff, 0x00, 0x00, 1, 4, true, random(5,50), random(50,150), random(1000, 10000));
-              break;
-      case 4: eCylonBounce(0xff, 0x00, 0x00, 4, 10, 50); break;              
-      case 5: eNewKITT(0xff, 0x00, 0x00, 8, 10, 50); break;
-      case 6: eTwinkle(0xff, 0x00, 0x00, 10, 100, false); break;
-      case 7: eTwinkleRandom(20, 100, false); break;
-      case 8: eSparkle(0xff, 0xff, 0xff, 0); break;
-      case 9: eSnowSparkle(0x10, 0x10, 0x10, 20, random(100,1000)); break;
-      case 10: eRunningLights(0xff,0x00,0x00, 50); eRunningLights(0xff,0xff,0xff, 50); eRunningLights(0x00,0x00,0xff, 50); break;
-      case 11: eColorWipe(0x00,0xff,0x00, 50); eColorWipe(0x00,0x00,0x00, 50); break;
-      case 12: eRainbowCycle(20,80); break;
-      case 13: eTheaterChase(false, 0xff,0,0,50); break;
-      case 14: eTheaterChase(true, 0,0,0, 50); break;
-      case 17: eMeteorRain(0xff,0xff,0xff,10, 64, true, 30); break;
-      case 21: eConfetti(10); break;
-      //case 22: eLightning(500); break;
-      //case 23: eRing(500); break;
-      //case 24: eDrop(500); break;
-*/
 EffectDetails effectDetails = {
-  //{ eFire,                  "Fire" },
   { eRGBLoop,                 "RGB loop" },
   { eJuggle,                  "Juggle" },
   { eBPM,                     "BPM" },
   { eSinelon,                 "Sinelon" },
   { eBouncingColoredBalls,    "Bouncing Colored Balls" },
   { eBouncingColoredBallsMC,  "Bouncing Colored Balls Multi-Color" },
-  { eCandle,                  "Candle" } 
+  { eCandle,                  "Candle" },
+  { eFadeInOut,               "Fade-in Fade-out" },
+  { eStrobe,                  "Strobe" },
+  { eHalloweenEyes,           "Halloween Eyes" },
+  { eCylonBounce,             "Cylon Bounce" },
+  { eNewKITT,                 "New KITT" },
+  { eTwinkle,                 "Twinkle" },
+  { eTwinkleRandom,           "Twinkle Random" },
+  { eSparkle,                 "Sparkle" },
+  { eSnowSparkle,             "Sparkle Snow" },
+  { eRunningLights,           "Running Lights" },
+  { eColorWipe,               "Color Wipe" },
+  { eRainbowCycle,            "Rainbow Cycle" },
+  { eTheaterChase,            "Theater Chase" },
+  { eTheaterChaseRainbow,     "Theater Chase Rainbow" },
+  { eMeteorRain,              "Meteor Rain" },
+  { eFire,                    "Fire" },
+  { eConfetti,                "Confetti" }
+  //{ eLightning,             "Lightning" },
+  //{ eRing,                  "Ring" },
+  //{ eDrop,                  "Drop" },
 };
 
 const uint8_t effectDetailsCount = ARRAY_SIZE(effectDetails);

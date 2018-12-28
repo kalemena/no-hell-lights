@@ -143,7 +143,7 @@ void eBouncingColoredBallsMC() {
   BouncingColoredBalls(3, colors, false);
 }
 
-void eFadeInOut(byte red, byte green, byte blue) {
+void efFadeInOut(byte red, byte green, byte blue) {
   float r, g, b;
       
   for(int k = 0; k < 256; k=k+1) { 
@@ -165,7 +165,11 @@ void eFadeInOut(byte red, byte green, byte blue) {
   }
 }
 
-void eStrobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, int EndPause) {
+void eFadeInOut() {
+  efFadeInOut(0xff, 0x00, 0x00); efFadeInOut(0xff, 0xff, 0xff); efFadeInOut(0x00, 0x00, 0xff);  
+}
+
+void efStrobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, int EndPause) {
   for(int j = 0; j < StrobeCount; j++) {
     setAll(red,green,blue);
     showStrip();
@@ -180,8 +184,12 @@ void eStrobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, i
  delay(EndPause);
 }
 
+void eStrobe() {
+  efStrobe(0xff, 0xff, 0xff, 10, 50, 1000);  
+}
+
 // HalloweenEyes - Color (red, green, blue), Size of eye, space between eyes, fade (true/false), steps, fade delay, end pause
-void eHalloweenEyes(byte red, byte green, byte blue, int EyeWidth, int EyeSpace, boolean Fade, int Steps, int FadeDelay, int EndPause) {
+void efHalloweenEyes(byte red, byte green, byte blue, int EyeWidth, int EyeSpace, boolean Fade, int Steps, int FadeDelay, int EndPause) {
   randomSeed(analogRead(0));
   
   int i;
@@ -218,6 +226,10 @@ void eHalloweenEyes(byte red, byte green, byte blue, int EyeWidth, int EyeSpace,
   setAll(0,0,0); // Set all black
   
   delay(EndPause);
+}
+
+void eHalloweenEyes() {
+  efHalloweenEyes(0xff, 0x00, 0x00, 1, 4, true, random(5,50), random(50,150), random(1000, 10000));
 }
 
 // used by NewKITT
@@ -301,12 +313,16 @@ void RightToLeft(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, i
 }
 
 // CylonBounce - Color (red, green, blue), eye size, speed delay, end pause
-void eCylonBounce(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay){
+void efCylonBounce(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay){
   RightToLeft(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
   LeftToRight(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
 }
 
-void eNewKITT(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay){
+void eCylonBounce() {
+  efCylonBounce(0xff, 0x00, 0x00, 4, 10, 50);
+}
+
+void efNewKITT(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay){
   RightToLeft(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
   LeftToRight(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
   OutsideToCenter(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
@@ -317,7 +333,11 @@ void eNewKITT(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int 
   CenterToOutside(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
 }
 
-void eTwinkle(byte red, byte green, byte blue, int Count, int SpeedDelay, boolean OnlyOne) {
+void eNewKITT() {
+  efNewKITT(0xff, 0x00, 0x00, 8, 10, 50);
+}
+
+void efTwinkle(byte red, byte green, byte blue, int Count, int SpeedDelay, boolean OnlyOne) {
   setAll(0,0,0);
   
   for (int i=0; i<Count; i++) {
@@ -333,7 +353,11 @@ void eTwinkle(byte red, byte green, byte blue, int Count, int SpeedDelay, boolea
   delay(SpeedDelay);
 }
 
-void eTwinkleRandom(int Count, int SpeedDelay, boolean OnlyOne) {
+void eTwinkle() {
+  efTwinkle(0xff, 0x00, 0x00, 10, 100, false);
+}
+
+void efTwinkleRandom(int Count, int SpeedDelay, boolean OnlyOne) {
   setAll(0,0,0);
   
   for (int i=0; i<Count; i++) {
@@ -349,7 +373,11 @@ void eTwinkleRandom(int Count, int SpeedDelay, boolean OnlyOne) {
   delay(SpeedDelay);
 }
 
-void eSparkle(byte red, byte green, byte blue, int SpeedDelay) {
+void eTwinkleRandom() {
+  efTwinkleRandom(20, 100, false);
+}
+
+void efSparkle(byte red, byte green, byte blue, int SpeedDelay) {
   int Pixel = random(NUM_LEDS);
   setPixel(Pixel,red,green,blue);
   showStrip();
@@ -358,7 +386,11 @@ void eSparkle(byte red, byte green, byte blue, int SpeedDelay) {
   setPixel(Pixel,0,0,0);
 }
 
-void eSnowSparkle(byte red, byte green, byte blue, int SparkleDelay, int SpeedDelay) {
+void eSparkle() {
+  efSparkle(0xff, 0xff, 0xff, 0);
+}
+
+void efSnowSparkle(byte red, byte green, byte blue, int SparkleDelay, int SpeedDelay) {
   setAll(red,green,blue);
   
   int Pixel = random(NUM_LEDS);
@@ -373,7 +405,11 @@ void eSnowSparkle(byte red, byte green, byte blue, int SparkleDelay, int SpeedDe
   delay(SpeedDelay);
 }
 
-void eRunningLights(byte red, byte green, byte blue, int WaveDelay) {
+void eSnowSparkle() {
+  efSnowSparkle(0x10, 0x10, 0x10, 20, random(100,1000));
+}
+
+void efRunningLights(byte red, byte green, byte blue, int WaveDelay) {
   int Position=0;
   
   for(int i=0; i<NUM_LEDS*2; i++)
@@ -395,13 +431,24 @@ void eRunningLights(byte red, byte green, byte blue, int WaveDelay) {
   }
 }
 
-void eColorWipe(byte red, byte green, byte blue, int SpeedDelay) {
+void eRunningLights() {
+  efRunningLights(0xff,0x00,0x00, 50); 
+  efRunningLights(0xff,0xff,0xff, 50); 
+  efRunningLights(0x00,0x00,0xff, 50);
+}
+
+void efColorWipe(byte red, byte green, byte blue, int SpeedDelay) {
   for(uint16_t i=0; i<NUM_LEDS; i++) {
       setPixel(i, red, green, blue);
       showStrip();
       if(tick()) return;
       delay(SpeedDelay);
   }
+}
+
+void eColorWipe() {
+  efColorWipe(0x00,0xff,0x00, 50); 
+  efColorWipe(0x00,0x00,0x00, 50);
 }
 
 void addGlitter(int chanceOfGlitter) {
@@ -437,7 +484,7 @@ byte * Wheel(byte WheelPos) {
   return c;
 }
 
-void eRainbowCycle(int SpeedDelay, int chanceOfGlitter) {
+void efRainbowCycle(int SpeedDelay, int chanceOfGlitter) {
   byte *c;
   uint16_t i, j;
 
@@ -454,7 +501,11 @@ void eRainbowCycle(int SpeedDelay, int chanceOfGlitter) {
   }
 }
 
-void eTheaterChase(boolean rainbow, byte red, byte green, byte blue, int SpeedDelay) {
+void eRainbowCycle() {
+  efRainbowCycle(20,80);
+}
+
+void efTheaterChase(boolean rainbow, byte red, byte green, byte blue, int SpeedDelay) {
   byte *c;
   
   for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
@@ -479,6 +530,14 @@ void eTheaterChase(boolean rainbow, byte red, byte green, byte blue, int SpeedDe
   }
 }
 
+void eTheaterChase() {
+  efTheaterChase(false, 0xff,0,0,50);
+}
+
+void eTheaterChaseRainbow() {
+  efTheaterChase(true, 0xff,0,0,50);
+}
+
 void setPixelHeatColor(int Pixel, byte temperature) {
   // Scale 'heat' down from 0-255 to 0-191
   byte t192 = round((temperature/255.0)*191);
@@ -498,7 +557,7 @@ void setPixelHeatColor(int Pixel, byte temperature) {
 }
 
 // Fire - Cooling rate, Sparking rate, speed delay
-void eFire(int Cooling, int Sparking, int SpeedDelay) {
+void efFire(int Cooling, int Sparking, int SpeedDelay) {
   static byte heat[NUM_LEDS];
   int cooldown;
   
@@ -535,6 +594,10 @@ void eFire(int Cooling, int Sparking, int SpeedDelay) {
   delay(SpeedDelay);
 }
 
+void eFire() {
+  efFire(55,120,15);
+}
+
 // used by meteorrain
 void fadeToBlack(int ledNo, byte fadeValue) {
  #ifdef ADAFRUIT_NEOPIXEL_H 
@@ -559,7 +622,7 @@ void fadeToBlack(int ledNo, byte fadeValue) {
  #endif  
 }
 
-void eMeteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTrailDecay, boolean meteorRandomDecay, int SpeedDelay) {  
+void efMeteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTrailDecay, boolean meteorRandomDecay, int SpeedDelay) {  
   setAll(0,0,0);
   
   for(int i = 0; i < NUM_LEDS+NUM_LEDS; i++) {
@@ -583,7 +646,11 @@ void eMeteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTr
   }
 }
 
-void eConfetti(int SpeedDelay) {
+void eMeteorRain() {
+  efMeteorRain(0xff,0xff,0xff,10, 64, true, 30);
+}
+
+void efConfetti(int SpeedDelay) {
   while(true) {
     // random colored speckles that blink in and fade smoothly
  #ifdef ADAFRUIT_NEOPIXEL_H
@@ -597,6 +664,10 @@ void eConfetti(int SpeedDelay) {
     showStrip();
     if(tick()) return;
   }
+}
+
+void eConfetti() {
+  efConfetti(10);
 }
 
 void eSinelon() {
@@ -653,6 +724,10 @@ void eJuggle() {
   }
 }
 /*
+void eDrop() {
+  efDrop(500);
+}
+
 void eDrop(uint8_t wait) {
   while(true) {
     uint16_t i, j;
