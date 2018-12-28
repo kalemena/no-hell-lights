@@ -31,8 +31,15 @@ ESP8266WebServer server(80);
 #include "effects.h"
 
 uint8_t currentEffectIndex = 0;
+uint8_t wantedEffectIndex = 0;
 boolean inProgress = false;
 boolean effectChanged = false;
+
+enum Animation {
+  automatic,
+  single,
+  scene
+} animation;
 
 // ==== List of effects
 
@@ -84,16 +91,15 @@ void setup(void) {
   Serial.println();
   Serial.println("WS2812 initializing");
 #ifdef ADAFRUIT_NEOPIXEL_H 
-  strip.setBrightness(LED_BRIGHTNESS);
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
 #else
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
   //FastLED.setDither(false);
   FastLED.setCorrection(TypicalLEDStrip);
-  FastLED.setBrightness(LED_BRIGHTNESS);
   FastLED.setMaxPowerInVoltsAndMilliamps(5, MILLI_AMPS);
 #endif
+  setBrightness(100);
   delay(50);
   
   pinMode(STATUS_LED, OUTPUT);
@@ -133,6 +139,12 @@ void setup(void) {
   server.on("/", handle_Root);
   server.on("/switch", HTTP_GET, handle_SwitchEffect);
   // server.on("/status", handle_Status);
+
+  server.on("/set/brightness", HTTP_GET, []() {
+    String value = server.arg("value");
+    setBrightness(value.toInt());
+    handle_Status();
+  });
   
   // static files
   //server.serveStatic("/favicon.ico", SPIFFS, "/favicon.ico");
@@ -141,7 +153,8 @@ void setup(void) {
   server.begin();
 
   Serial.println("Effects:" + String(effectDetailsCount));
-  
+
+  animation = automatic;
   Serial.println("Service initialized");
 }
 
@@ -150,13 +163,17 @@ void loop(void) {
   server.handleClient();
 
   EVERY_N_MILLISECONDS( 20 ) { gHue++; }
-  // EVERY_N_SECONDS( 10 ) { nextPattern(); } // change patterns periodically
-
+  EVERY_N_SECONDS( 10 ) { wantedEffectIndex = (wantedEffectIndex+1) % effectDetailsCount; }
+  
+  if(animation == automatic && currentEffectIndex != wantedEffectIndex) { 
+    currentEffectIndex = wantedEffectIndex;
+    inProgress = false;
+    Serial.println("Switch to " + String(effectDetails[currentEffectIndex].name));
+  }
+  
   if(inProgress == false) {
-    // record last effect
-    EEPROM.get(0,currentEffectIndex);
-    
     inProgress = true;
+    EEPROM.get(0,currentEffectIndex);
     effectDetails[currentEffectIndex].effect();
     inProgress = false;
   }
@@ -235,22 +252,32 @@ void handle_NotFound() {
 
 void handle_Status() {  
   String json = "{\n";
-  json += " \"heap\":" + String(ESP.getFreeHeap()) + ",\n";
-  json += " \"gpio\":"+String((uint32_t)(((GPI | GPO) & 0xFFFF) | ((GP16I & 0x01) << 16))) + ",\n";
+  json += " \"system\": {\n";
+  json += "   \"heap\": " + String(ESP.getFreeHeap()) + ",\n";
+  json += "   \"gpio\": " + String((uint32_t)(((GPI | GPO) & 0xFFFF) | ((GP16I & 0x01) << 16))) + "\n";
+  json += "  },\n";
+  json += " \"properties\": {\n";
+  json += "   \"brightness\": " + String(gBrightness) + "\n";
+  json += "  }\n";
   json += "}";
   server.send(200, "application/json", json);
   json = String();
 }
 
-void handle_SwitchEffect() {
+void changeEffect() {
   currentEffectIndex++;
   if(currentEffectIndex >= effectDetailsCount) { 
     currentEffectIndex = 0;
   }
+  wantedEffectIndex = currentEffectIndex;
   EEPROM.put(0, currentEffectIndex);
   //EEPROM.write(0, selectedEffect);
   //EEPROM.commit();
   effectChanged = true;
+}
+
+void handle_SwitchEffect() {
+  changeEffect();
 
   String json = "{\n";
   json += " \"effect\":\n {\n";

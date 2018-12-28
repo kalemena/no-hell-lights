@@ -1,10 +1,27 @@
 extern boolean tick(); // let some time for other threads
 
 uint8_t gHue = 0; // rotating "base color" used by many of the patterns
+uint8_t gBrightness = 100;
 
 // ***************************************
 // ** FastLed/NeoPixel Common Functions **
 // ***************************************
+
+void setBrightness(uint8_t value)
+{
+  if (value > 255) value = 255;
+  if (value < 0) value = 0;
+
+  gBrightness = value;
+#ifdef ADAFRUIT_NEOPIXEL_H
+  strip.setBrightness(brightness);
+#else
+  FastLED.setBrightness(gBrightness);
+#endif
+
+  EEPROM.write(0, gBrightness);
+  EEPROM.commit();
+}
 
 // Apply LED color changes
 void showStrip() {
