@@ -1,4 +1,14 @@
+typedef void (*Effect)();
+typedef Effect Effects[];
+typedef struct {
+  Effect effect;
+  String name;
+} EffectDetail;
+typedef EffectDetail EffectDetails[];
+
 extern boolean tick(); // let some time for other threads
+extern EffectDetails effectDetails;
+extern uint8_t currentEffectIndex;
 
 uint8_t gHue = 0; // rotating "base color" used by many of the patterns
 uint8_t gBrightness = 100;
@@ -57,6 +67,7 @@ void setAll(byte red, byte green, byte blue) {
 // ** FastLed/NeoPixel Effects          **
 // ***************************************
 
+#define EFFECT_RGB_LOOP "RGB Loop"
 void eRGBLoop() {
   for(int j = 0; j < 3; j++ ) { 
     // Fade IN
@@ -84,7 +95,9 @@ void eRGBLoop() {
   }
 }
 
-void BouncingColoredBalls(int BallCount, byte colors[][3], boolean continuous) {
+#define EFFECT_BOUNCING_BALLS "Bouncing Balls"
+#define EFFECT_BOUNCING_BALLS_MC "Bouncing Balls Multiple"
+void BouncingColoredBalls(String effectName, int BallCount, byte colors[][3], boolean continuous) {
   float Gravity = -9.81;
   int StartHeight = 1;
   
@@ -149,7 +162,7 @@ void BouncingColoredBalls(int BallCount, byte colors[][3], boolean continuous) {
 void eBouncingColoredBalls() {
   // mimic BouncingBalls
   byte onecolor[1][3] = { {0xff, 0x00, 0x00} };
-  BouncingColoredBalls(1, onecolor, false);
+  BouncingColoredBalls(EFFECT_BOUNCING_BALLS, 1, onecolor, false);
 }
 
 void eBouncingColoredBallsMC() {
@@ -157,7 +170,7 @@ void eBouncingColoredBallsMC() {
   byte colors[3][3] = { {0xff, 0x00, 0x00}, 
                         {0xff, 0xff, 0xff}, 
                         {0x00, 0x00, 0xff} };
-  BouncingColoredBalls(3, colors, false);
+  BouncingColoredBalls(EFFECT_BOUNCING_BALLS_MC, 3, colors, false);
 }
 
 void efFadeInOut(byte red, byte green, byte blue) {

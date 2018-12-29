@@ -33,31 +33,23 @@ ESP8266WebServer server(80);
 uint8_t currentEffectIndex = 0;
 uint8_t wantedEffectIndex = 0;
 boolean inProgress = false;
-boolean effectChanged = false;
+uint8_t autoplayDuration = 10;
 
 enum Animation {
-  automatic,
+  autoplay,
   single,
   scene
 } animation;
 
 // ==== List of effects
 
-typedef void (*Effect)();
-typedef Effect Effects[];
-typedef struct {
-  Effect effect;
-  String name;
-} EffectDetail;
-typedef EffectDetail EffectDetails[];
-
 EffectDetails effectDetails = {
-  { eRGBLoop,                 "RGB loop" },
+  { eRGBLoop,                 EFFECT_RGB_LOOP },
   { eJuggle,                  "Juggle" },
   { eBPM,                     "BPM" },
   { eSinelon,                 "Sinelon" },
-  { eBouncingColoredBalls,    "Bouncing Colored Balls" },
-  { eBouncingColoredBallsMC,  "Bouncing Colored Balls Multi-Color" },
+  { eBouncingColoredBalls,    EFFECT_BOUNCING_BALLS },
+  { eBouncingColoredBallsMC,  EFFECT_BOUNCING_BALLS_MC },
   { eCandle,                  "Candle" },
   { eFadeInOut,               "Fade-in Fade-out" },
   { eStrobe,                  "Strobe" },
@@ -154,7 +146,7 @@ void setup(void) {
 
   Serial.println("Effects:" + String(effectDetailsCount));
 
-  animation = automatic;
+  animation = autoplay;
   Serial.println("Service initialized");
 }
 
@@ -163,28 +155,34 @@ void loop(void) {
   server.handleClient();
 
   EVERY_N_MILLISECONDS( 20 ) { gHue++; }
-  EVERY_N_SECONDS( 10 ) { wantedEffectIndex = (wantedEffectIndex+1) % effectDetailsCount; }
+  EVERY_N_SECONDS( autoplayDuration ) { 
+    if(animation == autoplay) {
+      changeEffect(); 
+    }
+  }
+
+  // return to ensure no 2 effects are running at same time
+  if(inProgress == true)
+    return;
   
-  if(animation == automatic && currentEffectIndex != wantedEffectIndex) { 
+  if(currentEffectIndex != wantedEffectIndex) { 
     currentEffectIndex = wantedEffectIndex;
-    inProgress = false;
-    Serial.println("Switch to " + String(effectDetails[currentEffectIndex].name));
+    Serial.println("Switch to " + String(currentEffectIndex) + " " + String(effectDetails[currentEffectIndex].name));
   }
-  
-  if(inProgress == false) {
-    inProgress = true;
-    EEPROM.get(0,currentEffectIndex);
-    effectDetails[currentEffectIndex].effect();
-    inProgress = false;
-  }
+      
+  inProgress = true;
+  // EEPROM.get(0,currentEffectIndex);
+  effectDetails[currentEffectIndex].effect();
+  inProgress = false;
 }
 
 boolean tick() {
   loop();
-  if(effectChanged) {
-    effectChanged = false;
+  
+  if(currentEffectIndex != wantedEffectIndex) {
     return true;
   }
+  
   return false;
 }
 
@@ -265,15 +263,10 @@ void handle_Status() {
 }
 
 void changeEffect() {
-  currentEffectIndex++;
-  if(currentEffectIndex >= effectDetailsCount) { 
-    currentEffectIndex = 0;
-  }
-  wantedEffectIndex = currentEffectIndex;
-  EEPROM.put(0, currentEffectIndex);
+  wantedEffectIndex = (wantedEffectIndex+1) % effectDetailsCount;
+  EEPROM.put(0, wantedEffectIndex);
   //EEPROM.write(0, selectedEffect);
   //EEPROM.commit();
-  effectChanged = true;
 }
 
 void handle_SwitchEffect() {
