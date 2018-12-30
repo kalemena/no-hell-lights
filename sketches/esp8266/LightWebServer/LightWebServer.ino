@@ -33,7 +33,6 @@ ESP8266WebServer server(80);
 uint8_t currentEffectIndex = 0;
 uint8_t wantedEffectIndex = 0;
 boolean inProgress = false;
-uint8_t autoplayDuration = 10;
 
 enum Animation {
   autoplay,
@@ -133,11 +132,7 @@ void setup(void) {
   server.on("/switch", HTTP_GET, handle_SwitchEffect);
   // server.on("/status", handle_Status);
 
-  server.on("/set/brightness", HTTP_GET, []() {
-    String value = server.arg("value");
-    setBrightness(value.toInt());
-    handle_Status();
-  });
+  server.on("/settings", HTTP_POST, controllerSettings);
   
   // static files
   //server.serveStatic("/favicon.ico", SPIFFS, "/favicon.ico");
@@ -154,6 +149,12 @@ void setup(void) {
 void loop(void) {
   // waiting fo a client
   server.handleClient();
+
+  if(settingsPowerOn == false) {
+    setAll(0,0,0); 
+    delay(50);
+    return;
+  }
 
   EVERY_N_MILLISECONDS( 20 ) { gHue++; }
   EVERY_N_SECONDS( autoplayDuration ) { 
@@ -179,10 +180,12 @@ void loop(void) {
 
 boolean tick() {
   loop();
-  
-  if(currentEffectIndex != wantedEffectIndex) {
+
+  if(settingsPowerOn == false)
     return true;
-  }
+  
+  if(currentEffectIndex != wantedEffectIndex)
+    return true;
   
   return false;
 }
@@ -261,6 +264,25 @@ void handle_Status() {
   json += "}";
   server.send(200, "application/json", json);
   json = String();
+}
+
+void controllerSettings() {
+  Serial.println("Ctrl Settings");
+  if(server.hasArg("power") == true) {
+    String value = server.arg("power");
+    settingsPowerOn = (value.toInt() == 1);
+    server.send(200, "application/json", "{ \"power\": " + String(value) + " }");
+    return;
+  }
+
+  if(server.hasArg("brightness") == true) {
+    String value = server.arg("brightness");
+    setBrightness(value.toInt());
+    server.send(200, "application/json", "{ \"brightness\": " + String(value) + " }");
+    return;
+  }
+  
+  server.send(404, "application/json", "");
 }
 
 void controllerEffects() {  

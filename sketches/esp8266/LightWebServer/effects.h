@@ -11,7 +11,6 @@ extern EffectDetails effectDetails;
 extern uint8_t currentEffectIndex;
 
 uint8_t gHue = 0; // rotating "base color" used by many of the patterns
-uint8_t gBrightness = 100;
 
 // ***************************************
 // ** FastLed/NeoPixel Common Functions **
