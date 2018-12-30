@@ -44,12 +44,12 @@ enum Animation {
 // ==== List of effects
 
 EffectDetails effectDetails = {
-  { eRGBLoop,                 EFFECT_RGB_LOOP },
+  { eRGBLoop,                 "RGB Loop" },
   { eJuggle,                  "Juggle" },
   { eBPM,                     "BPM" },
   { eSinelon,                 "Sinelon" },
-  { eBouncingColoredBalls,    EFFECT_BOUNCING_BALLS },
-  { eBouncingColoredBallsMC,  EFFECT_BOUNCING_BALLS_MC },
+  { eBouncingColoredBalls,    "Bouncing Balls" },
+  { eBouncingColoredBallsMC,  "Bouncing Balls Multiple" },
   { eCandle,                  "Candle" },
   { eFadeInOut,               "Fade-in Fade-out" },
   { eStrobe,                  "Strobe" },
@@ -129,6 +129,7 @@ void setup(void) {
   
   Serial.println("Controller initializing");
   server.on("/", handle_Root);
+  server.on("/effects", controllerEffects);
   server.on("/switch", HTTP_GET, handle_SwitchEffect);
   // server.on("/status", handle_Status);
 
@@ -257,6 +258,20 @@ void handle_Status() {
   json += " \"properties\": {\n";
   json += "   \"brightness\": " + String(gBrightness) + "\n";
   json += "  }\n";
+  json += "}";
+  server.send(200, "application/json", json);
+  json = String();
+}
+
+void controllerEffects() {  
+  String json = "{\n";
+  json += " \"effects\": [\n";
+  for(int i = 0; i < effectDetailsCount; i++) {
+    json += "   { \"id\": " + String(i) + ", \"name\": \"" + effectDetails[i].name + "\" }";
+    if(i+1 < effectDetailsCount) json += ",";
+    json += "\n";
+  }
+  json += "  ]\n";
   json += "}";
   server.send(200, "application/json", json);
   json = String();
