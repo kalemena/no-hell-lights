@@ -34,12 +34,6 @@ uint8_t currentEffectIndex = 0;
 uint8_t wantedEffectIndex = 0;
 boolean inProgress = false;
 
-enum Animation {
-  autoplay,
-  single,
-  scene
-} animation;
-
 // ==== List of effects
 
 EffectDetails effectDetails = {
@@ -142,10 +136,11 @@ void setup(void) {
 
   Serial.println("Effects:" + String(effectDetailsCount));
 
-  animation = autoplay;
+  settingsAnimationMode = autoplay;
   Serial.println("Service initialized");
 }
 
+long timeoutAutoplay = millis();
 void loop(void) {
   // waiting fo a client
   server.handleClient();
@@ -157,21 +152,24 @@ void loop(void) {
   }
 
   EVERY_N_MILLISECONDS( 20 ) { gHue++; }
-  EVERY_N_SECONDS( settingsAutoplayDuration ) { 
-    if(animation == autoplay) {
-      changeEffect(); 
-    }
+  //EVERY_N_SECONDS( settingsAutoplayDuration ) {  }
+  long currentTime = millis();
+  if(settingsAnimationMode == autoplay && (currentTime > timeoutAutoplay)) {
+    // reset timeout
+    timeoutAutoplay = currentTime + settingsAutoplayDuration * 1000;
+    changeEffect(); 
   }
-
+    
   // return to ensure no 2 effects are running at same time
   if(inProgress == true)
     return;
   
   if(currentEffectIndex != wantedEffectIndex) { 
     currentEffectIndex = wantedEffectIndex;
-    Serial.println("Switch to " + String(currentEffectIndex) + " " + String(effectDetails[currentEffectIndex].name));
+    Serial.println("Switch to effect " + String(currentEffectIndex) + " " + String(effectDetails[currentEffectIndex].name));
   }
-      
+
+  // run the effect
   inProgress = true;
   // EEPROM.get(0,currentEffectIndex);
   effectDetails[currentEffectIndex].effect();
@@ -252,44 +250,69 @@ void handle_NotFound() {
   digitalWrite(STATUS_LED, 0);
 }
 
-void handle_Status() {  
+String renderStatus(String message) {
   String json = "{\n";
   json += " \"system\": {\n";
   json += "   \"heap\": " + String(ESP.getFreeHeap()) + ",\n";
   json += "   \"gpio\": " + String((uint32_t)(((GPI | GPO) & 0xFFFF) | ((GP16I & 0x01) << 16))) + "\n";
   json += "  },\n";
+  json += " \"message\": \"" + message + "\",\n";
   json += " \"properties\": {\n";
-  json += "   \"brightness\": " + String(gBrightness) + "\n";
+  json += "   \"power\": " + String(settingsPowerOn) + ",\n";
+  String animationMode = "autoplay";
+  if(settingsAnimationMode == single) 
+    animationMode = "single";
+  else if(settingsAnimationMode == scene)
+    animationMode = "scene";
+  json += "   \"animation-mode\": \"" + animationMode + "\",\n";
+  json += "   \"brightness\": " + String(settingsBrightness) + ",\n";
+  json += "   \"autoplay-duration\": " + String(settingsAutoplayDuration) + "\n";
   json += "  }\n";
   json += "}";
+  return json;
+}
+
+void controllerStatus() {  
+  String json = renderStatus("status");
   server.send(200, "application/json", json);
   json = String();
 }
 
 void controllerSettings() {
   Serial.println("Ctrl Settings");
+  int httpCode = 404;
+
   if(server.hasArg("power") == true) {
     String value = server.arg("power");
     settingsPowerOn = (value.toInt() == 1);
-    server.send(200, "application/json", "{ \"power\": " + String(value) + " }");
-    return;
+    httpCode = 200;
   }
 
   if(server.hasArg("brightness") == true) {
     String value = server.arg("brightness");
     setBrightness(value.toInt());
-    server.send(200, "application/json", "{ \"brightness\": " + String(value) + " }");
-    return;
+    httpCode = 200;
   }
 
   if(server.hasArg("autoplay-duration") == true) {
     String value = server.arg("autoplay-duration");
     settingsAutoplayDuration = value.toInt();
-    server.send(200, "application/json", "{ \"autoplay-duration\": " + String(value) + " }");
-    return;
+    httpCode = 200;
   }
-  
-  server.send(404, "application/json", "");
+
+  if(server.hasArg("animation-mode") == true) {
+    String value = server.arg("animation-mode");
+    if(value == "single") 
+      settingsAnimationMode = single;
+    else if(value == "scene")
+      settingsAnimationMode = scene;
+    else
+      settingsAnimationMode = autoplay;
+    httpCode = 200;
+  }
+
+  String json = renderStatus("properties updates");
+  server.send(httpCode, "application/json", json);
 }
 
 void controllerEffects() {  

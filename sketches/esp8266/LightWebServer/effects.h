@@ -21,14 +21,14 @@ void setBrightness(uint8_t value)
   if (value > 255) value = 255;
   if (value < 0) value = 0;
 
-  gBrightness = value;
+  settingsBrightness = value;
 #ifdef ADAFRUIT_NEOPIXEL_H
-  strip.setBrightness(brightness);
+  strip.setBrightness(settingsBrightness);
 #else
-  FastLED.setBrightness(gBrightness);
+  FastLED.setBrightness(settingsBrightness);
 #endif
 
-  EEPROM.write(0, gBrightness);
+  EEPROM.write(0, settingsBrightness);
   EEPROM.commit();
 }
 

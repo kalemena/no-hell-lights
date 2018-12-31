@@ -5,6 +5,12 @@
 #define MILLI_AMPS      2000 // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
 #define STATUS_LED      13
 
+enum AnimationMode {
+  autoplay,
+  single,
+  scene
+} settingsAnimationMode;
+
 boolean settingsPowerOn = true;
 uint8_t settingsAutoplayDuration = 10;
-uint8_t gBrightness = 100;
+uint8_t settingsBrightness = 100;
