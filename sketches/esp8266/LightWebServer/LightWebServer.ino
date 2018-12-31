@@ -157,7 +157,7 @@ void loop(void) {
   }
 
   EVERY_N_MILLISECONDS( 20 ) { gHue++; }
-  EVERY_N_SECONDS( autoplayDuration ) { 
+  EVERY_N_SECONDS( settingsAutoplayDuration ) { 
     if(animation == autoplay) {
       changeEffect(); 
     }
@@ -279,6 +279,13 @@ void controllerSettings() {
     String value = server.arg("brightness");
     setBrightness(value.toInt());
     server.send(200, "application/json", "{ \"brightness\": " + String(value) + " }");
+    return;
+  }
+
+  if(server.hasArg("autoplay-duration") == true) {
+    String value = server.arg("autoplay-duration");
+    settingsAutoplayDuration = value.toInt();
+    server.send(200, "application/json", "{ \"autoplay-duration\": " + String(value) + " }");
     return;
   }
   

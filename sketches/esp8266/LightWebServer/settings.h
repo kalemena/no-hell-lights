@@ -6,5 +6,5 @@
 #define STATUS_LED      13
 
 boolean settingsPowerOn = true;
-uint8_t autoplayDuration = 10;
+uint8_t settingsAutoplayDuration = 10;
 uint8_t gBrightness = 100;
