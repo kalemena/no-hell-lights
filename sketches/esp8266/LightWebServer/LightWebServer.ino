@@ -121,11 +121,9 @@ void setup(void) {
   }
   
   Serial.println("Controller initializing");
-  server.on("/", handle_Root);
-  server.on("/effects", controllerEffects);
-  server.on("/switch", HTTP_GET, handle_SwitchEffect);
-  // server.on("/status", handle_Status);
-
+  server.on("/", controllerRoot);
+  server.on("/effects", HTTP_GET, controllerEffects);
+  server.on("/status", HTTP_GET, controllerStatus);
   server.on("/settings", HTTP_POST, controllerSettings);
   
   // static files
@@ -192,13 +190,9 @@ boolean tick() {
 
 // ==== Web Controllers
 
-void handle_Root() {
+void controllerRoot() {
   Serial.println("Client connected");
   digitalWrite(STATUS_LED, 1);
-  
-  // data from the colorpicker (e.g. #FF00FF)
-  // String color = server.arg("c"); Serial.println("Color: " + color);
-  // String scene = server.arg("s"); Serial.println("Scene: " + scene);
 
   // building page
   String result = 
@@ -311,6 +305,8 @@ void controllerSettings() {
     httpCode = 200;
   }
 
+  // changeEffect();
+
   String json = renderStatus("properties updates");
   server.send(httpCode, "application/json", json);
 }
@@ -319,7 +315,10 @@ void controllerEffects() {
   String json = "{\n";
   json += " \"effects\": [\n";
   for(int i = 0; i < effectDetailsCount; i++) {
-    json += "   { \"id\": " + String(i) + ", \"name\": \"" + effectDetails[i].name + "\" }";
+    json += "   { \"id\": " + String(i) + ", \"name\": \"" + effectDetails[i].name + "\"";
+    if(i == wantedEffectIndex)
+      json += ", \"selected\":true";
+    json += " }";
     if(i+1 < effectDetailsCount) json += ",";
     json += "\n";
   }
@@ -334,17 +333,4 @@ void changeEffect() {
   EEPROM.put(0, wantedEffectIndex);
   //EEPROM.write(0, selectedEffect);
   //EEPROM.commit();
-}
-
-void handle_SwitchEffect() {
-  changeEffect();
-
-  String json = "{\n";
-  json += " \"effect\":\n {\n";
-  json += "  \"index\":" + String(currentEffectIndex) + ",\n";
-  json += "  \"name\": \"" + String(effectDetails[currentEffectIndex].name) + "\"\n";
-  json += " }\n";
-  json += "}";
-  server.send(200, "application/json", json);
-  json = String();
 }
