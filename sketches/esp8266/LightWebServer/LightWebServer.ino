@@ -282,18 +282,21 @@ void controllerSettings() {
   if(server.hasArg("power") == true) {
     String value = server.arg("power");
     settingsPowerOn = (value.toInt() == 1);
+    saveSettingsPowerOn(settingsPowerOn);
     httpCode = 200;
   }
 
   if(server.hasArg("brightness") == true) {
     String value = server.arg("brightness");
     setBrightness(value.toInt());
+    saveSettingsBrightness(value.toInt());
     httpCode = 200;
   }
 
   if(server.hasArg("autoplay-duration") == true) {
     String value = server.arg("autoplay-duration");
     settingsAutoplayDuration = value.toInt();
+    saveSettingsAutoplayDuration(settingsAutoplayDuration);
     httpCode = 200;
   }
 
@@ -302,8 +305,6 @@ void controllerSettings() {
     settingsAnimationMode = readAnimiationMode(value);
     httpCode = 200;
   }
-
-  // changeEffect();
 
   String json = renderStatus("properties updates");
   server.send(httpCode, "application/json", json);

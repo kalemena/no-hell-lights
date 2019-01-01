@@ -48,8 +48,24 @@ void loadSettings() {
   Serial.println("  Wanted Effect Index = " + String(settingsWantedEffectIndex) );
 }
 
-void saveSettingsWantedEffectIndex(uint8_t value) {
+void saveEEPROM(int idx, uint8_t value) {
   //EEPROM.put(0, value);
-  EEPROM.write(SETTING_WANTED_EFFECT_INDEX, value);
+  EEPROM.write(idx, value);
   EEPROM.commit();
+}
+
+void saveSettingsPowerOn(uint8_t value) {
+  saveEEPROM(SETTING_POWER, value);
+}
+
+void saveSettingsAutoplayDuration(uint8_t value) {
+  saveEEPROM(SETTING_AUTOPLAY_DURATION, value);
+}
+
+void saveSettingsBrightness(uint8_t value) {
+  saveEEPROM(SETTING_BRIGHTNESS, value);
+}
+
+void saveSettingsWantedEffectIndex(uint8_t value) {
+  saveEEPROM(SETTING_WANTED_EFFECT_INDEX, value);
 }
