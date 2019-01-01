@@ -31,7 +31,6 @@ ESP8266WebServer server(80);
 #include "effects.h"
 
 uint8_t currentEffectIndex = 0;
-uint8_t wantedEffectIndex = 0;
 boolean inProgress = false;
 
 // ==== List of effects
@@ -74,7 +73,7 @@ void setup(void) {
   Serial.begin(115200);
   
   Serial.println();
-  Serial.println("WS2812 initializing");
+  Serial.println("Initializing WS2812 ...");
 #ifdef ADAFRUIT_NEOPIXEL_H 
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
@@ -89,6 +88,10 @@ void setup(void) {
   
   pinMode(STATUS_LED, OUTPUT);
   digitalWrite(STATUS_LED, 0);
+
+  Serial.println("Initializing EEPROM ...");
+  loadSettings();  
+      
 /*
   Serial.println("SPIFFS initializing");
   SPIFFS.begin();
@@ -105,6 +108,7 @@ void setup(void) {
   delay(10);
 */ 
   Serial.println("WiFi initializing");
+  // WiFi.setSleepMode(WIFI_NONE_SLEEP);
   WiFi.begin(ssid, password);
   Serial.println();
   while(WiFi.status() != WL_CONNECTED) {
@@ -145,7 +149,7 @@ void loop(void) {
 
   if(settingsPowerOn == false) {
     setAll(0,0,0); 
-    delay(50);
+    delay(10);
     return;
   }
 
@@ -162,14 +166,13 @@ void loop(void) {
   if(inProgress == true)
     return;
   
-  if(currentEffectIndex != wantedEffectIndex) { 
-    currentEffectIndex = wantedEffectIndex;
+  if(currentEffectIndex != settingsWantedEffectIndex) { 
+    currentEffectIndex = settingsWantedEffectIndex;
     Serial.println("Switch to effect " + String(currentEffectIndex) + " " + String(effectDetails[currentEffectIndex].name));
   }
 
   // run the effect
   inProgress = true;
-  // EEPROM.get(0,currentEffectIndex);
   effectDetails[currentEffectIndex].effect();
   inProgress = false;
 }
@@ -180,7 +183,7 @@ boolean tick() {
   if(settingsPowerOn == false)
     return true;
   
-  if(currentEffectIndex != wantedEffectIndex)
+  if(currentEffectIndex != settingsWantedEffectIndex)
     return true;
   
   return false;
@@ -296,12 +299,7 @@ void controllerSettings() {
 
   if(server.hasArg("animation-mode") == true) {
     String value = server.arg("animation-mode");
-    if(value == "single") 
-      settingsAnimationMode = single;
-    else if(value == "scene")
-      settingsAnimationMode = scene;
-    else
-      settingsAnimationMode = autoplay;
+    settingsAnimationMode = readAnimiationMode(value);
     httpCode = 200;
   }
 
@@ -316,7 +314,7 @@ void controllerEffects() {
   json += " \"effects\": [\n";
   for(int i = 0; i < effectDetailsCount; i++) {
     json += "   { \"id\": " + String(i) + ", \"name\": \"" + effectDetails[i].name + "\"";
-    if(i == wantedEffectIndex)
+    if(i == settingsWantedEffectIndex)
       json += ", \"selected\":true";
     json += " }";
     if(i+1 < effectDetailsCount) json += ",";
@@ -329,8 +327,6 @@ void controllerEffects() {
 }
 
 void changeEffect() {
-  wantedEffectIndex = (wantedEffectIndex+1) % effectDetailsCount;
-  EEPROM.put(0, wantedEffectIndex);
-  //EEPROM.write(0, selectedEffect);
-  //EEPROM.commit();
+  settingsWantedEffectIndex = (settingsWantedEffectIndex+1) % effectDetailsCount;
+  saveSettingsWantedEffectIndex(settingsWantedEffectIndex);
 }
