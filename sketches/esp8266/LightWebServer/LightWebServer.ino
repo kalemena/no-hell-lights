@@ -10,6 +10,10 @@
 #include <EEPROM.h>
 #include <FS.h>
 
+extern "C" {
+  #include "user_interface.h"
+}
+
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 #define MINVAL(A,B)   (((A) < (B)) ? (A) : (B))
 #define MAXVAL(A,B)   (((A) > (B)) ? (A) : (B))
@@ -247,10 +251,31 @@ void handle_NotFound() {
   digitalWrite(STATUS_LED, 0);
 }
 
+String renderEffects() {
+  String json = "[\n";
+  for(int i = 0; i < effectDetailsCount; i++) {
+    json += "   { \"id\": " + String(i) + ", \"name\": \"" + effectDetails[i].name + "\"";
+    if(i == settingsWantedEffectIndex)
+      json += ", \"selected\":true";
+    json += " }";
+    if(i+1 < effectDetailsCount) json += ",";
+    json += "\n";
+  }
+  json += "  ]\n";
+  return json;
+}
+
 String renderStatus(String message) {
   String json = "{\n";
   json += " \"system\": {\n";
   json += "   \"heap\": " + String(ESP.getFreeHeap()) + ",\n";
+  json += "   \"boot-version\": " + String(ESP.getBootVersion()) + ",\n";
+  json += "   \"cpu-frequency\": " + String(system_get_cpu_freq()) + ",\n";
+  json += "   \"sdk\": \"" + String(system_get_sdk_version()) + "\",\n";
+  json += "   \"chip-id\": " + String(system_get_chip_id()) + ",\n";
+  json += "   \"flash-id\": " + String(spi_flash_get_id()) + ",\n";
+  json += "   \"flash-size\": " + String(ESP.getFlashChipRealSize()) + ",\n";
+  json += "   \"vcc\": " + String(ESP.getVcc()) + ",\n";
   json += "   \"gpio\": " + String((uint32_t)(((GPI | GPO) & 0xFFFF) | ((GP16I & 0x01) << 16))) + "\n";
   json += "  },\n";
   json += " \"message\": \"" + message + "\",\n";
@@ -264,7 +289,8 @@ String renderStatus(String message) {
   json += "   \"animation-mode\": \"" + animationMode + "\",\n";
   json += "   \"brightness\": " + String(settingsBrightness) + ",\n";
   json += "   \"autoplay-duration\": " + String(settingsAutoplayDuration) + "\n";
-  json += "  }\n";
+  json += "  },\n";
+  json += " \"effects\": " + renderEffects();
   json += "}";
   return json;
 }
@@ -312,17 +338,7 @@ void controllerSettings() {
 
 void controllerEffects() {  
   String json = "{\n";
-  json += " \"effects\": [\n";
-  for(int i = 0; i < effectDetailsCount; i++) {
-    json += "   { \"id\": " + String(i) + ", \"name\": \"" + effectDetails[i].name + "\"";
-    if(i == settingsWantedEffectIndex)
-      json += ", \"selected\":true";
-    json += " }";
-    if(i+1 < effectDetailsCount) json += ",";
-    json += "\n";
-  }
-  json += "  ]\n";
-  json += "}";
+  json += " \"effects\": " + renderEffects() + "}";
   server.send(200, "application/json", json);
   json = String();
 }
