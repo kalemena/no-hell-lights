@@ -137,7 +137,7 @@ void setup(void) {
   // static files
   //server.serveStatic("/favicon.ico", SPIFFS, "/favicon.ico");
    
-  server.onNotFound(handle_NotFound);
+  server.onNotFound(exceptionNotFound);
   server.begin();
 
   Serial.println("Effects:" + String(effectDetailsCount));
@@ -228,27 +228,64 @@ void controllerRoot() {
   digitalWrite(STATUS_LED, 0);
 }
 
-void handle_NotFound() {
-  digitalWrite(STATUS_LED, 1);
-  
-  //if(!handleFileRead(server.uri())) {
-    String message = "File Not Found\n\n";
-    message += "URI: ";
-    message += server.uri();
-    message += "\nMethod: ";
-    message += ( server.method() == HTTP_GET ) ? "GET" : "POST";
-    message += "\nArguments: ";
-    message += server.args();
-    message += "\n";
-  
-    for ( uint8_t i = 0; i < server.args(); i++ ) {
-      message += " " + server.argName ( i ) + ": " + server.arg ( i ) + "\n";
-    }
-  
-    server.send ( 404, "text/plain", message );
-  //}
-    
-  digitalWrite(STATUS_LED, 0);
+void controllerStatus() {  
+  String json = renderStatus("status");
+  server.send(200, "application/json", json);
+  json = String();
+}
+
+void controllerSettings() {
+  Serial.println("Ctrl Settings");
+  int httpCode = 404;
+
+  if(server.hasArg("power") == true) {
+    String value = server.arg("power");
+    settingsPowerOn = (value.toInt() == 1);
+    saveSettingsPowerOn(settingsPowerOn);
+    httpCode = 200;
+  }
+
+  if(server.hasArg("brightness") == true) {
+    String value = server.arg("brightness");
+    setBrightness(value.toInt());
+    saveSettingsBrightness(value.toInt());
+    httpCode = 200;
+  }
+
+  if(server.hasArg("autoplay-duration") == true) {
+    String value = server.arg("autoplay-duration");
+    settingsAutoplayDuration = value.toInt();
+    saveSettingsAutoplayDuration(settingsAutoplayDuration);
+    httpCode = 200;
+  }
+
+  if(server.hasArg("animation-mode") == true) {
+    String value = server.arg("animation-mode");
+    settingsAnimationMode = readAnimiationMode(value);
+    httpCode = 200;
+  }
+
+  if(server.hasArg("effect") == true) {
+    String value = server.arg("effect");
+    settingsWantedEffectIndex = value.toInt();
+    saveSettingsWantedEffectIndex(settingsWantedEffectIndex);
+    httpCode = 200;
+  }
+
+  String json = renderStatus("properties updates");
+  server.send(httpCode, "application/json", json);
+}
+
+void controllerEffects() {  
+  String json = "{\n";
+  json += " \"effects\": " + renderEffects() + "}";
+  server.send(200, "application/json", json);
+  json = String();
+}
+
+void changeEffect() {
+  settingsWantedEffectIndex = (settingsWantedEffectIndex+1) % effectDetailsCount;
+  saveSettingsWantedEffectIndex(settingsWantedEffectIndex);
 }
 
 String renderEffects() {
@@ -295,55 +332,25 @@ String renderStatus(String message) {
   return json;
 }
 
-void controllerStatus() {  
-  String json = renderStatus("status");
-  server.send(200, "application/json", json);
-  json = String();
-}
-
-void controllerSettings() {
-  Serial.println("Ctrl Settings");
-  int httpCode = 404;
-
-  if(server.hasArg("power") == true) {
-    String value = server.arg("power");
-    settingsPowerOn = (value.toInt() == 1);
-    saveSettingsPowerOn(settingsPowerOn);
-    httpCode = 200;
-  }
-
-  if(server.hasArg("brightness") == true) {
-    String value = server.arg("brightness");
-    setBrightness(value.toInt());
-    saveSettingsBrightness(value.toInt());
-    httpCode = 200;
-  }
-
-  if(server.hasArg("autoplay-duration") == true) {
-    String value = server.arg("autoplay-duration");
-    settingsAutoplayDuration = value.toInt();
-    saveSettingsAutoplayDuration(settingsAutoplayDuration);
-    httpCode = 200;
-  }
-
-  if(server.hasArg("animation-mode") == true) {
-    String value = server.arg("animation-mode");
-    settingsAnimationMode = readAnimiationMode(value);
-    httpCode = 200;
-  }
-
-  String json = renderStatus("properties updates");
-  server.send(httpCode, "application/json", json);
-}
-
-void controllerEffects() {  
-  String json = "{\n";
-  json += " \"effects\": " + renderEffects() + "}";
-  server.send(200, "application/json", json);
-  json = String();
-}
-
-void changeEffect() {
-  settingsWantedEffectIndex = (settingsWantedEffectIndex+1) % effectDetailsCount;
-  saveSettingsWantedEffectIndex(settingsWantedEffectIndex);
+void exceptionNotFound() {
+  digitalWrite(STATUS_LED, 1);
+  
+  //if(!handleFileRead(server.uri())) {
+    String message = "File Not Found\n\n";
+    message += "URI: ";
+    message += server.uri();
+    message += "\nMethod: ";
+    message += ( server.method() == HTTP_GET ) ? "GET" : "POST";
+    message += "\nArguments: ";
+    message += server.args();
+    message += "\n";
+  
+    for ( uint8_t i = 0; i < server.args(); i++ ) {
+      message += " " + server.argName ( i ) + ": " + server.arg ( i ) + "\n";
+    }
+  
+    server.send ( 404, "text/plain", message );
+  //}
+    
+  digitalWrite(STATUS_LED, 0);
 }

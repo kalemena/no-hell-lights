@@ -16,8 +16,7 @@ uint8_t gHue = 0; // rotating "base color" used by many of the patterns
 // ** FastLed/NeoPixel Common Functions **
 // ***************************************
 
-void setBrightness(uint8_t value)
-{
+void setBrightness(uint8_t value) {
   if (value > 255) value = 255;
   if (value < 0) value = 0;
 
