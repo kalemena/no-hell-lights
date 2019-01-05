@@ -9,6 +9,8 @@
 #include <ESP8266mDNS.h>
 #include <EEPROM.h>
 #include <FS.h>
+//#include <iostream>
+#include <ArduinoJson.h>
 
 extern "C" {
   #include "user_interface.h"
@@ -70,6 +72,7 @@ EffectDetails effectDetails = {
 };
 
 const uint8_t effectDetailsCount = ARRAY_SIZE(effectDetails);
+StaticJsonBuffer<1024> jsonBuffer;
 
 // ==== SETUP and Main loop
 
@@ -133,6 +136,7 @@ void setup(void) {
   server.on("/effects", HTTP_GET, controllerEffects);
   server.on("/status", HTTP_GET, controllerStatus);
   server.on("/settings", HTTP_POST, controllerSettings);
+  server.on("/pixels", HTTP_POST, controllerPixels);
   
   // static files
   //server.serveStatic("/favicon.ico", SPIFFS, "/favicon.ico");
@@ -276,6 +280,30 @@ void controllerSettings() {
   server.send(httpCode, "application/json", json);
 }
 
+void controllerPixels() {
+  Serial.println("Ctrl Pixels");
+  int httpCode = 404;
+  String json;
+  JsonObject& root = jsonBuffer.parseObject(server.arg("plain"));
+  if (!root.success()) {
+    Serial.println("ParseObject() failed");
+    exceptionParsingJson();
+  }
+  
+  /*String pixels = root["pixels"];
+  // Most of the time, you can rely on the implicit casts.
+  // In other case, you can do root["time"].as<long>();
+  const char* sensor = root["sensor"];
+  long time = root["time"];
+  double latitude = root["data"][0];
+  double longitude = root["data"][1];
+  */
+  
+  //String json = renderStatus("properties updates");
+  root.prettyPrintTo(json);
+  server.send(httpCode, "application/json", json);
+}
+
 void controllerEffects() {  
   String json = "{\n";
   json += " \"effects\": " + renderEffects() + "}";
@@ -318,11 +346,7 @@ String renderStatus(String message) {
   json += " \"message\": \"" + message + "\",\n";
   json += " \"properties\": {\n";
   json += "   \"power\": " + String(settingsPowerOn) + ",\n";
-  String animationMode = "autoplay";
-  if(settingsAnimationMode == single) 
-    animationMode = "single";
-  else if(settingsAnimationMode == scene)
-    animationMode = "scene";
+  String animationMode = writeAnimiationMode(settingsAnimationMode);
   json += "   \"animation-mode\": \"" + animationMode + "\",\n";
   json += "   \"brightness\": " + String(settingsBrightness) + ",\n";
   json += "   \"autoplay-duration\": " + String(settingsAutoplayDuration) + "\n";
@@ -332,25 +356,33 @@ String renderStatus(String message) {
   return json;
 }
 
+void exceptionParsingJson() {
+  String msg = "{\n";
+  msg += " \"error\": \"JSON parsing failed\"\n";
+  msg += "}";
+  server.send ( 500, "application/json", msg );
+}
+
 void exceptionNotFound() {
   digitalWrite(STATUS_LED, 1);
   
   //if(!handleFileRead(server.uri())) {
-    String message = "File Not Found\n\n";
-    message += "URI: ";
-    message += server.uri();
-    message += "\nMethod: ";
-    message += ( server.method() == HTTP_GET ) ? "GET" : "POST";
-    message += "\nArguments: ";
-    message += server.args();
-    message += "\n";
-  
-    for ( uint8_t i = 0; i < server.args(); i++ ) {
-      message += " " + server.argName ( i ) + ": " + server.arg ( i ) + "\n";
-    }
-  
-    server.send ( 404, "text/plain", message );
-  //}
+  String msg = "{\n";
+  msg += " \"error\": \"File not found\",\n";
+  msg += " \"properties\": {\n";
+  msg += "  \"uri\": \"" + server.uri() + "\",\n";
+  String methodStr = (server.method() == HTTP_GET) ? "GET" : "POST";
+  msg += "  \"method\": \"" + methodStr + "\",\n";
+  msg += "  \"arguments\": {\n";
+  for ( uint8_t i = 0; i < server.args(); i++ ) {
+    msg += "   \"" + server.argName (i) + "\": \"" + server.arg (i) + "\",\n";
+    if(i+1 < server.args()) msg += ",";
+    msg += "\n";
+  }
+  msg += "\n  }\n";
+  msg += " }\n";
+  msg += "}";
+  server.send(404, "application/json", msg );
     
   digitalWrite(STATUS_LED, 0);
 }

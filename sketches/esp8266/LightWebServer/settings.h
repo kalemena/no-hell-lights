@@ -9,7 +9,7 @@
 enum AnimationMode {
   autoplay,
   single,
-  scene
+  paint
 } settingsAnimationMode;
 
 #define SETTING_POWER 0
@@ -26,11 +26,23 @@ AnimationMode readAnimiationMode(String valueString) {
   AnimationMode valueAM = autoplay;
   if(valueString == "single")
     valueAM = single;
-  else if(valueString == "scene")
-    valueAM = scene;
+  else if(valueString == "paint")
+    valueAM = paint;
   else
     valueAM = autoplay;
   return valueAM;
+}
+
+// Rendering String value
+String writeAnimiationMode(AnimationMode valueAM) {
+  String valueString = "autoplay";
+  if(valueAM == single)
+    valueString == "single";
+  else if(valueAM == paint)
+    valueString == "paint";
+  else
+    valueString = "autoplay";
+  return valueString;
 }
 
 // Manage EEPROM
