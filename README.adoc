@@ -45,7 +45,7 @@ For 12v strips, make sure not to burn the arduino 5v: don't hook the Vcc !
 image:res/ws2812-wiring.png[]
 
 
-==== Sketches
+=== Sketches
 
 External samples:
 
@@ -55,7 +55,70 @@ Internal samples:
 
 * link:sketches/arduino/WS2812/Fast-LED-sample1/Fast-LED-sample1.ino[Fast-LED-sample1.ino]
 
-==== Resources
+
+=== APIs
+
+==== Status
+
+$ curl --request GET http://192.168.1.50/status
+
+{
+ "system": {
+   "heap": 36944,
+   "boot-version": 5,
+   "cpu-frequency": 160,
+   "sdk": "1.5.3(aec24ac9)",
+   "chip-id": 2918146,
+   "flash-id": 1458400,
+   "flash-size": 4194304,
+   "vcc": 65535,
+   "gpio": 86053
+  },
+ "message": "status",
+ "properties": {
+   "power": 1,
+   "animation-mode": "single",
+   "brightness": 255,
+   "autoplay-duration": 10
+  },
+ "effects": [
+   { "id": 0, "name": "RGB Loop" },
+   { "id": 1, "name": "Juggle" },
+   { "id": 2, "name": "BPM" },
+   { "id": 3, "name": "Sinelon" },
+   { "id": 4, "name": "Bouncing Balls" },
+   { "id": 5, "name": "Bouncing Balls Multiple" },
+   { "id": 6, "name": "Candle" },
+   { "id": 7, "name": "Fade-in Fade-out" },
+   { "id": 8, "name": "Strobe" },
+   { "id": 9, "name": "Halloween Eyes" },
+   { "id": 10, "name": "Cylon Bounce" },
+   { "id": 11, "name": "New KITT" },
+   { "id": 12, "name": "Twinkle" },
+   { "id": 13, "name": "Twinkle Random" },
+   { "id": 14, "name": "Sparkle" },
+   { "id": 15, "name": "Sparkle Snow" },
+   { "id": 16, "name": "Running Lights" },
+   { "id": 17, "name": "Color Wipe" },
+   { "id": 18, "name": "Rainbow Cycle" },
+   { "id": 19, "name": "Theater Chase" },
+   { "id": 20, "name": "Theater Chase Rainbow" },
+   { "id": 21, "name": "Meteor Rain", "selected":true },
+   { "id": 22, "name": "Fire" },
+   { "id": 23, "name": "Confetti" }
+  ]
+}
+
+==== Settings
+
+Sets some settings.
+Can be one of:
+
+* animation-mode= autoplay/single/paint
+
+$ curl --request POST  http://192.168.1.50/settings?animation-mode=single
+
+== Resources
 
 * https://arduino-esp8266.readthedocs.io/en/latest/
 
