@@ -53,6 +53,13 @@ void setPixel(int Pixel, byte red, byte green, byte blue) {
 #endif
 }
 
+void setPixel(int Pixel, long hexColor) {
+  long r = hexColor >> 16;
+  long g = hexColor >> 8 & 0xFF;
+  long b = hexColor & 0xFF;
+  setPixel(Pixel, r, g, b);
+}
+
 // Set all LEDs to a given color and apply it (visible)
 void setAll(byte red, byte green, byte blue) {
   for(int i = 0; i < NUM_LEDS; i++ ) {
@@ -64,6 +71,11 @@ void setAll(byte red, byte green, byte blue) {
 // ***************************************
 // ** FastLed/NeoPixel Effects          **
 // ***************************************
+
+// Paint as requested
+void ePaint() {
+  // TODO
+}
 
 void eRGBLoop() {
   for(int j = 0; j < 3; j++ ) { 

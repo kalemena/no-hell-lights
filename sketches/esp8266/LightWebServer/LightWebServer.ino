@@ -72,7 +72,6 @@ EffectDetails effectDetails = {
 };
 
 const uint8_t effectDetailsCount = ARRAY_SIZE(effectDetails);
-StaticJsonBuffer<1024> jsonBuffer;
 
 // ==== SETUP and Main loop
 
@@ -292,7 +291,8 @@ void controllerSettings() {
 void controllerPixels() {
   Serial.println("Ctrl Pixels");
   int httpCode = 404;
-  String json;
+  
+  StaticJsonBuffer<1024> jsonBuffer;
   JsonObject& root = jsonBuffer.parseObject(server.arg("plain"));
   if (!root.success()) {
     String errorMsg = "ParseObject() failed: root";
@@ -311,6 +311,7 @@ void controllerPixels() {
     Serial.print("RGB color: "); Serial.println(pColorHexStr);
     long pColorHex = strtol( &pColorHexStr[0], NULL, 16);
     setPixel(pIdx.toInt(), pColorHex);
+    showStrip();
   }
   
   /*String pixels = root["pixels"];
@@ -323,8 +324,10 @@ void controllerPixels() {
   */
   
   //String json = renderStatus("properties updates");
+  String json;
   root.prettyPrintTo(json);
   server.send(httpCode, "application/json", json);
+  json = String();
 }
 
 void controllerEffects() {  
