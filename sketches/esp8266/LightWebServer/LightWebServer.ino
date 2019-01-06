@@ -145,8 +145,6 @@ void setup(void) {
   server.begin();
 
   Serial.println("Effects:" + String(effectDetailsCount));
-
-  settingsAnimationMode = autoplay;
   Serial.println("Service initialized");
 }
 
@@ -155,6 +153,7 @@ void loop(void) {
   // waiting fo a client
   server.handleClient();
 
+  // POWER OFF
   if(settingsPowerOn == false) {
     setAll(0,0,0); 
     delay(10);
@@ -164,15 +163,22 @@ void loop(void) {
   EVERY_N_MILLISECONDS( 20 ) { gHue++; }
   //EVERY_N_SECONDS( settingsAutoplayDuration ) {  }
   long currentTime = millis();
-  if(settingsAnimationMode == autoplay && (currentTime > timeoutAutoplay)) {
+  if(settingsAnimationMode == SETTING_ANIMATION_MODE_AUTOPLAY && (currentTime > timeoutAutoplay)) {
     // reset timeout
     timeoutAutoplay = currentTime + settingsAutoplayDuration * 1000;
-    changeEffect(); 
+    changeEffect();
+    return; 
   }
     
   // return to ensure no 2 effects are running at same time
   if(inProgress == true)
     return;
+
+  // Run the ePaint effect (not in list of effects)
+  if(settingsAnimationMode == SETTING_ANIMATION_MODE_PAINT) {
+    ePaint();
+    return;
+  }
   
   if(currentEffectIndex != settingsWantedEffectIndex) { 
     currentEffectIndex = settingsWantedEffectIndex;
@@ -265,7 +271,10 @@ void controllerSettings() {
 
   if(server.hasArg("animation-mode") == true) {
     String value = server.arg("animation-mode");
+    Serial.println("Ctrl Pixels: animation-mode=" + value);
     settingsAnimationMode = readAnimiationMode(value);
+    saveSettingsAnimationMode(settingsAnimationMode);
+    changeEffect();
     httpCode = 200;
   }
 
@@ -286,8 +295,22 @@ void controllerPixels() {
   String json;
   JsonObject& root = jsonBuffer.parseObject(server.arg("plain"));
   if (!root.success()) {
-    Serial.println("ParseObject() failed");
-    exceptionParsingJson();
+    String errorMsg = "ParseObject() failed: root";
+    exceptionParsingJson(errorMsg);
+  }
+
+  JsonArray& pixels = root["pixels"];
+  if (!pixels.success()) {
+    String errorMsg = "ParseObject() failed: pixels";
+    exceptionParsingJson(errorMsg);
+  }
+
+  for (JsonObject& pixel: pixels) {
+    String pIdx = pixel["index"];
+    String pColorHexStr = pixel["color"];
+    Serial.print("RGB color: "); Serial.println(pColorHexStr);
+    long pColorHex = strtol( &pColorHexStr[0], NULL, 16);
+    setPixel(pIdx.toInt(), pColorHex);
   }
   
   /*String pixels = root["pixels"];
@@ -346,7 +369,7 @@ String renderStatus(String message) {
   json += " \"message\": \"" + message + "\",\n";
   json += " \"properties\": {\n";
   json += "   \"power\": " + String(settingsPowerOn) + ",\n";
-  String animationMode = writeAnimiationMode(settingsAnimationMode);
+  String animationMode = renderAnimiationMode(settingsAnimationMode);
   json += "   \"animation-mode\": \"" + animationMode + "\",\n";
   json += "   \"brightness\": " + String(settingsBrightness) + ",\n";
   json += "   \"autoplay-duration\": " + String(settingsAutoplayDuration) + "\n";
@@ -356,9 +379,10 @@ String renderStatus(String message) {
   return json;
 }
 
-void exceptionParsingJson() {
+void exceptionParsingJson(String errorMsg) {
+  Serial.println();
   String msg = "{\n";
-  msg += " \"error\": \"JSON parsing failed\"\n";
+  msg += " \"error\": \"" + errorMsg + "\"\n";
   msg += "}";
   server.send ( 500, "application/json", msg );
 }
