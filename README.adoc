@@ -118,6 +118,22 @@ Can be one of:
 
 $ curl --request POST  http://192.168.1.50/settings?animation-mode=single
 
+==== Set Pixels
+
+$ curl --request POST --data '{ "pixels": [ { "index":1, "color": 0x123456 }, { "index": 2, "color": 0x987654 } ] }' http://192.168.1.50/pixels
+{
+  "pixels": [
+    {
+      "index": 1,
+      "color": 0x123456
+    },
+    {
+      "index": 2,
+      "color": 0x987654
+    }
+  ]
+}
+
 == Resources
 
 * https://arduino-esp8266.readthedocs.io/en/latest/
