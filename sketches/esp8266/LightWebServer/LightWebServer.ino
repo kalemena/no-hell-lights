@@ -97,22 +97,20 @@ void setup(void) {
 
   Serial.println("Initializing EEPROM ...");
   loadSettings();  
-      
-/*
-  Serial.println("SPIFFS initializing");
+
   SPIFFS.begin();
   {
+    Serial.println("SPIFFS contents:");
+
     Dir dir = SPIFFS.openDir("/");
-    while (dir.next()) {    
+    while (dir.next()) {
       String fileName = dir.fileName();
       size_t fileSize = dir.fileSize();
-      Serial.printf("FS File: %s, size: %s\n", fileName.c_str(), formatBytes(fileSize).c_str());
+      Serial.printf("FS File: %s, size: %s\n", fileName.c_str(), String(fileSize).c_str());
     }
     Serial.printf("\n");
   }
 
-  delay(10);
-*/ 
   Serial.println("WiFi initializing");
   // WiFi.setSleepMode(WIFI_NONE_SLEEP);
   WiFi.begin(ssid, password);
@@ -131,15 +129,11 @@ void setup(void) {
   }
   
   Serial.println("Controller initializing");
-  server.on("/", controllerRoot);
   server.on("/effects", HTTP_GET, controllerEffects);
   server.on("/status", HTTP_GET, controllerStatus);
   server.on("/settings", HTTP_POST, controllerSettings);
   server.on("/pixels", HTTP_POST, controllerPixels);
-  
-  // static files
-  //server.serveStatic("/favicon.ico", SPIFFS, "/favicon.ico");
-   
+  server.serveStatic("/", SPIFFS, "/", "max-age=86400");
   server.onNotFound(exceptionNotFound);
   server.begin();
 
@@ -205,37 +199,6 @@ boolean tick() {
 // ==== Tools
 
 // ==== Web Controllers
-
-void controllerRoot() {
-  Serial.println("Client connected");
-  digitalWrite(STATUS_LED, 1);
-
-  // building page
-  String result = 
-    "<!DOCTYPE HTML> \
-     <html>\
-      <head>\
-       <meta http-equiv=\"Content-type\" content=\"text/html\"; charset=utf-8\">\
-       <title>Web relays</title>\
-       <link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">\
-      </head>\
-      <table>\
-       <tr>\
-        <th>Description</th>\
-        <th>Status</th>\
-       </tr>";
-
-  result += "<tr>";
-  result += "<td>" + String("Theater Chase Rainbow") + "</td>";
-  result += "<td><a href=\"/scene?id=theaterchaserainbow\">Theater Chase Rainbow</button></a></td>";
-  result += "</tr>";
-  result += "</table>";
-  result += "</html>";
-  
-  server.send(200, "text/html", result);
-  // server.send ( 200, "text/html","<SCRIPT language='JavaScript'>window.location='/';</SCRIPT>");
-  digitalWrite(STATUS_LED, 0);
-}
 
 void controllerStatus() {  
   String json = renderStatus("status");
