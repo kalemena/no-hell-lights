@@ -60,6 +60,8 @@ Internal samples:
 
 ==== Status
 
+[source,bash]
+----
 $ curl --request GET http://192.168.1.50/status
 
 {
@@ -108,6 +110,7 @@ $ curl --request GET http://192.168.1.50/status
    { "id": 23, "name": "Confetti" }
   ]
 }
+----
 
 ==== Settings
 
@@ -116,10 +119,15 @@ Can be one of:
 
 * animation-mode= autoplay/single/paint
 
+[source,bash]
+----
 $ curl --request POST  http://192.168.1.50/settings?animation-mode=single
+----
 
 ==== Set Pixels
 
+[source,bash]
+----
 $ curl --request POST --data '{ "pixels": [ { "index":1, "color": 0x123456 }, { "index": 2, "color": 0x987654 } ] }' http://192.168.1.50/pixels
 {
   "pixels": [
@@ -133,6 +141,7 @@ $ curl --request POST --data '{ "pixels": [ { "index":1, "color": 0x123456 }, { 
     }
   ]
 }
+----
 
 == Resources
 
