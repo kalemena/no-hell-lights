@@ -128,7 +128,7 @@ $ curl --request POST  http://192.168.1.50/settings?animation-mode=single
 
 [source,bash]
 ----
-$ curl --request POST --data '{ "pixels": [ { "index":1, "color": 0x123456 }, { "index": 2, "color": 0x987654 } ] }' http://192.168.1.50/pixels
+$ curl --request POST --data '{ "pixels": [ { "index":1, "color": 0x123456 }, { "index": 2, "color": 0x987654 } ] }' http://192.168.1.50/pixels/set
 {
   "pixels": [
     {
@@ -141,6 +141,13 @@ $ curl --request POST --data '{ "pixels": [ { "index":1, "color": 0x123456 }, { 
     }
   ]
 }
+----
+
+==== Reset Pixels
+
+[source,bash]
+----
+$ curl --request POST http://192.168.1.50/pixels/reset
 ----
 
 == Resources

@@ -132,7 +132,8 @@ void setup(void) {
   server.on("/effects", HTTP_GET, controllerEffects);
   server.on("/status", HTTP_GET, controllerStatus);
   server.on("/settings", HTTP_POST, controllerSettings);
-  server.on("/pixels", HTTP_POST, controllerPixels);
+  server.on("/pixels/set", HTTP_POST, controllerPixelsSet);
+  server.on("/pixels/reset", HTTP_POST, controllerPixelsReset);
   server.serveStatic("/", SPIFFS, "/", "max-age=86400");
   server.onNotFound(exceptionNotFound);
   server.begin();
@@ -249,10 +250,11 @@ void controllerSettings() {
 
   String json = renderStatus("properties updates");
   server.send(httpCode, "application/json", json);
+  json = String();
 }
 
-void controllerPixels() {
-  Serial.println("Ctrl Pixels");
+void controllerPixelsSet() {
+  Serial.println("Ctrl Pixels Set");
   int httpCode = 404;
   
   StaticJsonBuffer<1024> jsonBuffer;
@@ -290,6 +292,16 @@ void controllerPixels() {
   String json;
   root.prettyPrintTo(json);
   server.send(httpCode, "application/json", json);
+  json = String();
+}
+
+void controllerPixelsReset() {
+  Serial.println("Ctrl Pixels Reset");
+
+  setAll(0,0,0);
+  
+  String json = renderStatus("pixels reset done");
+  server.send(200, "application/json", json);
   json = String();
 }
 
