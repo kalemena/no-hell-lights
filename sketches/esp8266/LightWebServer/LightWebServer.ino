@@ -289,19 +289,16 @@ void controllerPixelsSet() {
   */
   
   //String json = renderStatus("properties updates");
-  String json;
-  root.prettyPrintTo(json);
-  server.send(httpCode, "application/json", json);
+  String json = "";
+  server.send(204, "application/json", json);
   json = String();
 }
 
 void controllerPixelsReset() {
   Serial.println("Ctrl Pixels Reset");
-
-  setAll(0,0,0);
-  
-  String json = renderStatus("pixels reset done");
-  server.send(200, "application/json", json);
+  setAll(0,0,0);  
+  String json = "";
+  server.send(204, "application/json", json);
   json = String();
 }
 
