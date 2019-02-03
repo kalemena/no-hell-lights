@@ -296,7 +296,15 @@ void controllerPixelsSet() {
 
 void controllerPixelsReset() {
   Serial.println("Ctrl Pixels Reset");
-  setAll(0,0,0);  
+
+  if(server.hasArg("color") == true) {
+    String value = server.arg("color");
+    long pColorHex = strtol( &value[0], NULL, 16);
+    setAll(pColorHex);    
+  } else {
+    setAll(0,0,0);
+  }
+  
   String json = "";
   server.send(204, "application/json", json);
   json = String();

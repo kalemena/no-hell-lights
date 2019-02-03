@@ -68,6 +68,14 @@ void setAll(byte red, byte green, byte blue) {
   showStrip();
 }
 
+// Set all LEDs to a given color and apply it (visible)
+void setAll(long hexColor) {
+  long r = hexColor >> 16;
+  long g = hexColor >> 8 & 0xFF;
+  long b = hexColor & 0xFF;
+  setAll(r,g,b);
+}
+
 // ***************************************
 // ** FastLed/NeoPixel Effects          **
 // ***************************************
