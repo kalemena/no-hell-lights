@@ -42,7 +42,6 @@ boolean inProgress = false;
 // ==== List of effects
 
 EffectDetails effectDetails = {
-  { eRGBLoop,                 "RGB Loop" },
   { eJuggle,                  "Juggle" },
   { eBPM,                     "BPM" },
   { eSinelon,                 "Sinelon" },

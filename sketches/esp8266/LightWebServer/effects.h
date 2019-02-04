@@ -85,33 +85,6 @@ void ePaint() {
   // TODO
 }
 
-void eRGBLoop() {
-  for(int j = 0; j < 3; j++ ) { 
-    // Fade IN
-    for(int k = 0; k < 256; k++) { 
-      switch(j) { 
-        case 0: setAll(k,0,0); break;
-        case 1: setAll(0,k,0); break;
-        case 2: setAll(0,0,k); break;
-      }
-      showStrip();
-      if(tick()) return;
-      delay(3);
-    }
-    // Fade OUT
-    for(int k = 255; k >= 0; k--) { 
-      switch(j) { 
-        case 0: setAll(k,0,0); break;
-        case 1: setAll(0,k,0); break;
-        case 2: setAll(0,0,k); break;
-      }
-      showStrip();
-      if(tick()) return;
-      delay(3);
-    }
-  }
-}
-
 void BouncingColoredBalls(int BallCount, byte colors[][3], boolean continuous) {
   float Gravity = -9.81;
   int StartHeight = 1;
@@ -211,7 +184,14 @@ void efFadeInOut(byte red, byte green, byte blue) {
 }
 
 void eFadeInOut() {
-  efFadeInOut(0xff, 0x00, 0x00); efFadeInOut(0xff, 0xff, 0xff); efFadeInOut(0x00, 0x00, 0xff);  
+  for(int j = 0; j < 3; j++ ) { 
+    switch(j) { 
+        case 0: efFadeInOut(0xff,0,0); break;
+        case 1: efFadeInOut(0,0xff,0); break;
+        case 2: efFadeInOut(0,0,0xff); break;
+    }
+    delay(3);
+  }
 }
 
 void efStrobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, int EndPause) {
