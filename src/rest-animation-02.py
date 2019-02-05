@@ -1,3 +1,9 @@
+#!/usr/bin/python
+
+##
+## Strobe Effect
+##
+
 import requests
 import json
 import time

@@ -1,3 +1,8 @@
+#!/usr/bin/python
+
+##
+## Sinelon Effect
+##
 import requests
 import json
 import time

@@ -242,7 +242,7 @@ void controllerSettings() {
 
   if(server.hasArg("effect") == true) {
     String value = server.arg("effect");
-    settingsWantedEffectIndex = value.toInt();
+    settingsWantedEffectIndex = value.toInt() % effectDetailsCount;
     saveSettingsWantedEffectIndex(settingsWantedEffectIndex);
     httpCode = 200;
   }
