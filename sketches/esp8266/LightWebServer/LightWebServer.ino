@@ -4,12 +4,11 @@
 //#include <Adafruit_NeoPixel.h>
 
 #include <ESP8266WiFi.h>
-#include <WiFiClient.h>
+#include <WebSocketsServer.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <EEPROM.h>
 #include <FS.h>
-//#include <iostream>
 #include <ArduinoJson.h>
 
 extern "C" {
@@ -26,6 +25,7 @@ extern "C" {
 
 #include "settings.h"
 
+MDNSResponder mdns;
 ESP8266WebServer server(80);
 
 #ifdef ADAFRUIT_NEOPIXEL_H 
@@ -123,8 +123,13 @@ void setup(void) {
   Serial.println(ssid);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
-  if(MDNS.begin(host)) {
+  if (mdns.begin(host, WiFi.localIP())) {
     Serial.println("MDNS responder started");
+    mdns.addService("http", "tcp", 80);
+    // mdns.addService("ws", "tcp", 81);
+  }
+  else {
+    Serial.println("MDNS.begin failed");
   }
   
   Serial.println("Controller initializing");
@@ -139,6 +144,9 @@ void setup(void) {
 
   Serial.println("Effects:" + String(effectDetailsCount));
   Serial.println("Service initialized");
+
+  Serial.print("Connect to http://" + String(host) + ".local or http://");
+  Serial.println(WiFi.localIP());
 }
 
 long timeoutAutoplay = millis();
