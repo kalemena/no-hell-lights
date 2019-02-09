@@ -27,6 +27,7 @@ extern "C" {
 
 MDNSResponder mdns;
 ESP8266WebServer server(80);
+WebSocketsServer webSocket = WebSocketsServer(81);
 
 #ifdef ADAFRUIT_NEOPIXEL_H 
   Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, LED_PIN, NEO_RGB + NEO_KHZ800);
@@ -52,7 +53,7 @@ EffectDetails effectDetails = {
   { eStrobe,                  "Strobe" },
   { eHalloweenEyes,           "Halloween Eyes" },
   { eCylonBounce,             "Cylon Bounce" },
-  { eNewKITT,                 "New KITT" },
+  // { eNewKITT,                 "New KITT" },
   { eTwinkle,                 "Twinkle" },
   { eTwinkleRandom,           "Twinkle Random" },
   { eSparkle,                 "Sparkle" },
@@ -112,6 +113,7 @@ void setup(void) {
 
   Serial.println("WiFi initializing");
   // WiFi.setSleepMode(WIFI_NONE_SLEEP);
+  WiFi.hostname(host);
   WiFi.begin(ssid, password);
   Serial.println();
   while(WiFi.status() != WL_CONNECTED) {
@@ -142,6 +144,9 @@ void setup(void) {
   server.onNotFound(exceptionNotFound);
   server.begin();
 
+  webSocket.begin();
+  webSocket.onEvent(handleWebSocketEvent);
+
   Serial.println("Effects:" + String(effectDetailsCount));
   Serial.println("Service initialized");
 
@@ -153,6 +158,7 @@ long timeoutAutoplay = millis();
 void loop(void) {
   // waiting fo a client
   server.handleClient();
+  webSocket.loop();
 
   // POWER OFF
   if(settingsPowerOn == false) {
@@ -218,42 +224,10 @@ void controllerSettings() {
   Serial.println("Ctrl Settings");
   int httpCode = 404;
 
-  if(server.hasArg("power") == true) {
-    String value = server.arg("power");
-    settingsPowerOn = (value.toInt() == 1);
-    saveSettingsPowerOn(settingsPowerOn);
+  for (int i = 0; i < server.args(); i++) {
+    saveSetting(String(server.argName(i)), String(server.arg(i)));
     httpCode = 200;
-  }
-
-  if(server.hasArg("brightness") == true) {
-    String value = server.arg("brightness");
-    setBrightness(value.toInt());
-    saveSettingsBrightness(value.toInt());
-    httpCode = 200;
-  }
-
-  if(server.hasArg("autoplay-duration") == true) {
-    String value = server.arg("autoplay-duration");
-    settingsAutoplayDuration = value.toInt();
-    saveSettingsAutoplayDuration(settingsAutoplayDuration);
-    httpCode = 200;
-  }
-
-  if(server.hasArg("animation-mode") == true) {
-    String value = server.arg("animation-mode");
-    Serial.println("Ctrl Pixels: animation-mode=" + value);
-    settingsAnimationMode = readAnimiationMode(value);
-    saveSettingsAnimationMode(settingsAnimationMode);
-    changeEffect();
-    httpCode = 200;
-  }
-
-  if(server.hasArg("effect") == true) {
-    String value = server.arg("effect");
-    settingsWantedEffectIndex = value.toInt() % effectDetailsCount;
-    saveSettingsWantedEffectIndex(settingsWantedEffectIndex);
-    httpCode = 200;
-  }
+  } 
 
   String json = renderStatus("properties updates");
   server.send(httpCode, "application/json", json);
@@ -324,6 +298,56 @@ void controllerEffects() {
   json = String();
 }
 
+void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+  Serial.printf("webSocketEvent(%d, %d, ...)\r\n", num, type);
+  switch(type) {
+    case WStype_DISCONNECTED:
+      Serial.printf("[%u] Disconnected!\r\n", num);
+      break;
+    case WStype_CONNECTED:
+      {
+        IPAddress ip = webSocket.remoteIP(num);
+        Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\r\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+        // Send the current status
+        String statusMsg = renderStatus("");
+        char statusMsgChar[statusMsg.length()+1];
+        statusMsg.toCharArray(statusMsgChar,statusMsg.length()+1);
+        webSocket.sendTXT(num, statusMsgChar, strlen(statusMsgChar));
+      }
+      break;
+    case WStype_TEXT:
+      {
+        Serial.printf("[%u] get Text: %s\r\n", num, payload);
+  
+        String payloadStr = String((const char *)payload);
+        if(payloadStr.startsWith("settings")) {
+          int idxEqual = payloadStr.indexOf("=");
+          if(idxEqual > 0 && idxEqual < payloadStr.length()) {
+            String optionName = payloadStr.substring(9, idxEqual);
+            String optionValue = payloadStr.substring(idxEqual+1);
+            saveSetting(optionName, optionValue);
+          }
+        } else {
+          Serial.println("Unknown command");
+        }
+        
+        // send data to all connected clients
+        webSocket.broadcastTXT(payload, length);
+      }
+      break;
+    case WStype_BIN:
+      Serial.printf("[%u] get binary length: %u\r\n", num, length);
+      hexdump(payload, length);
+
+      // echo data back to browser
+      webSocket.sendBIN(num, payload, length);
+      break;
+    default:
+      Serial.printf("Invalid WStype [%d]\r\n", type);
+      break;
+  }
+}
+
 void changeEffect() {
   settingsWantedEffectIndex = (settingsWantedEffectIndex+1) % effectDetailsCount;
   saveSettingsWantedEffectIndex(settingsWantedEffectIndex);
@@ -356,7 +380,9 @@ String renderStatus(String message) {
   json += "   \"vcc\": " + String(ESP.getVcc()) + ",\n";
   json += "   \"gpio\": " + String((uint32_t)(((GPI | GPO) & 0xFFFF) | ((GP16I & 0x01) << 16))) + "\n";
   json += "  },\n";
-  json += " \"message\": \"" + message + "\",\n";
+  if(message != "") {
+    json += " \"message\": \"" + message + "\",\n";
+  }
   json += " \"properties\": {\n";
   json += "   \"power\": " + String(settingsPowerOn) + ",\n";
   String animationMode = renderAnimiationMode(settingsAnimationMode);

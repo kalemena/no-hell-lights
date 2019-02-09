@@ -5,18 +5,25 @@
 #define MILLI_AMPS      2000 // IMPORTANT: set the max milli-Amps of your power supply (4A = 4000mA)
 #define STATUS_LED      13
 
+#define SETTING_POWER_NAME                  "power"
+#define SETTING_POWER_VALUE_ON              "on"
+#define SETTING_POWER_VALUE_OFF             "off"
 #define SETTING_POWER 0
 boolean settingsPowerOn = true;
 
+#define SETTING_AUTOPLAY_DURATION_NAME      "autoplay-duration"
 #define SETTING_AUTOPLAY_DURATION 1
 uint8_t settingsAutoplayDuration = 10;
 
+#define SETTING_BRIGHTNESS_NAME             "brightness"
 #define SETTING_BRIGHTNESS 2
 uint8_t settingsBrightness = 100;
 
+#define SETTING_EFFECT_NAME                 "effect"
 #define SETTING_WANTED_EFFECT_INDEX 3
 uint8_t settingsWantedEffectIndex = 0;
 
+#define SETTING_ANIMATION_MODE_NAME         "animation-mode"
 #define SETTING_ANIMATION_MODE 4
 #define SETTING_ANIMATION_MODE_AUTOPLAY 0
 #define SETTING_ANIMATION_MODE_SINGLE   1
@@ -76,23 +83,31 @@ void saveEEPROM(int idx, uint8_t value) {
   EEPROM.commit();
 }
 
-void saveSettingsPowerOn(uint8_t value) {
-  saveEEPROM(SETTING_POWER, value);
-}
-
-void saveSettingsAutoplayDuration(uint8_t value) {
-  saveEEPROM(SETTING_AUTOPLAY_DURATION, value);
-}
-
-void saveSettingsBrightness(uint8_t value) {
-  saveEEPROM(SETTING_BRIGHTNESS, value);
-}
-
 void saveSettingsWantedEffectIndex(uint8_t value) {
   saveEEPROM(SETTING_WANTED_EFFECT_INDEX, value);
 }
 
-void saveSettingsAnimationMode(uint8_t value) {
-  Serial.println("Save settings: animation-mode=" + String(value));
-  saveEEPROM(SETTING_ANIMATION_MODE, value);
+extern void setBrightness(uint8_t value);
+extern const uint8_t effectDetailsCount;
+extern void changeEffect();
+void saveSetting(String optionName, String optionValue) {
+  if(optionName.equals(SETTING_POWER_NAME)) {
+    settingsPowerOn = optionValue.equals(SETTING_POWER_VALUE_ON);
+    saveEEPROM(SETTING_POWER, settingsPowerOn);
+  } else if(optionName.equals(SETTING_AUTOPLAY_DURATION_NAME)) {
+    settingsAutoplayDuration = optionValue.toInt();
+    saveEEPROM(SETTING_AUTOPLAY_DURATION, settingsAutoplayDuration);
+  } else if(optionName.equals(SETTING_BRIGHTNESS_NAME)) {
+    setBrightness(optionValue.toInt());
+    saveEEPROM(SETTING_BRIGHTNESS, optionValue.toInt());
+  } else if(optionName.equals(SETTING_EFFECT_NAME)) {
+    settingsWantedEffectIndex = optionValue.toInt() % effectDetailsCount;
+    saveEEPROM(SETTING_WANTED_EFFECT_INDEX, settingsWantedEffectIndex);
+  } else if(optionName.equals(SETTING_ANIMATION_MODE_NAME)) {
+    settingsAnimationMode = readAnimiationMode(optionValue);
+    saveEEPROM(SETTING_ANIMATION_MODE, settingsAnimationMode);
+    changeEffect();
+  } else {
+    Serial.println("Unknown settings: " + optionName + "=" + String(optionValue));
+  }
 }
