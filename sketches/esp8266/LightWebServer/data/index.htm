@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <title>No-Hell Lighting</title>
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <link rel="stylesheet" href="css/app-base.css">
+        <link rel="icon" href="images/sapin-100.png">
+
+        <script src="js/jquery-3.1.1.min.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        <script src="js/app-base.js"></script>
+    </head>
+    <body>
+        <div id="container" class="container">
+            <div>
+                <button type="button" class="btn btn-default" id="settingsPowerOn">On</button>
+                <button type="button" class="btn btn-default" id="settingsPowerOff">Off</button>
+            </div>
+
+            <!--<div id="gridColors" class="grid-colors"></div>-->
+            <div class="sliders">
+                <!--<input type="range" min="1" max="255" value="100" class="slider" id="sliderBrightness">-->
+                <input type="text" min="1" max="255" value="100" class="text" id="settingsBrightness">Brightness</input>
+            </div>
+            <div class="sliders">
+                <input type="text" min="1" max="255" value="10" class="text" id="settingsAutoplayDuration">Autoplay Duration</input>
+            </div>
+
+            <div class="selects">
+                <select id="settingsEffect"></select>
+            </div>
+            <div class="selects">
+                <select id="settingsAnimationMode">
+                        <option value="autoplay">Auto-play</option>
+                        <option value="single">Single Effect</option>
+                        <option value="paint">Paint</option>
+                </select>                
+            </div>
+        </div>
+        <div>
+            <div class="navbar-text" id="status">Loading, please wait...</div>
+        </div>
+    </body>
+</html>

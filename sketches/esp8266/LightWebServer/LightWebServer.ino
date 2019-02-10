@@ -396,9 +396,10 @@ String renderStatus(String message) {
   json += " \"properties\": {\n";
   json += "   \"power\": " + String(settingsPowerOn) + ",\n";
   String animationMode = renderAnimiationMode(settingsAnimationMode);
-  json += "   \"animation-mode\": \"" + animationMode + "\",\n";
+  json += "   \"animation_mode\": \"" + animationMode + "\",\n";
   json += "   \"brightness\": " + String(settingsBrightness) + ",\n";
-  json += "   \"autoplay-duration\": " + String(settingsAutoplayDuration) + "\n";
+  json += "   \"autoplay_duration\": " + String(settingsAutoplayDuration) + ",\n";
+  json += "   \"effect\": " + String(settingsWantedEffectIndex) + "\n";
   json += "  },\n";
   json += " \"effects\": " + renderEffects();
   json += "}";

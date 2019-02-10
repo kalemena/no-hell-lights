@@ -11,7 +11,7 @@
 #define SETTING_POWER 0
 boolean settingsPowerOn = true;
 
-#define SETTING_AUTOPLAY_DURATION_NAME      "autoplay-duration"
+#define SETTING_AUTOPLAY_DURATION_NAME      "autoplay_duration"
 #define SETTING_AUTOPLAY_DURATION 1
 uint8_t settingsAutoplayDuration = 10;
 
@@ -23,7 +23,7 @@ uint8_t settingsBrightness = 100;
 #define SETTING_WANTED_EFFECT_INDEX 3
 uint8_t settingsWantedEffectIndex = 0;
 
-#define SETTING_ANIMATION_MODE_NAME         "animation-mode"
+#define SETTING_ANIMATION_MODE_NAME         "animation_mode"
 #define SETTING_ANIMATION_MODE 4
 #define SETTING_ANIMATION_MODE_AUTOPLAY 0
 #define SETTING_ANIMATION_MODE_SINGLE   1
