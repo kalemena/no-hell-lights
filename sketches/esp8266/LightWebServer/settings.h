@@ -65,14 +65,18 @@ String renderAnimiationMode(uint8_t valueAM) {
 // Manage EEPROM
 void loadSettings() {
   EEPROM.begin(512);
-  settingsPowerOn = EEPROM.read(SETTING_POWER);
+  settingsPowerOn = EEPROM.read(SETTING_POWER);  
   Serial.println("  PowerOn = " + String(settingsPowerOn));
-  settingsAutoplayDuration = EEPROM.read(SETTING_AUTOPLAY_DURATION);
+  
+  settingsAutoplayDuration = EEPROM.read(SETTING_AUTOPLAY_DURATION);  
   Serial.println("  PlayDuration = " + String(settingsAutoplayDuration) );
-  settingsBrightness = EEPROM.read(SETTING_BRIGHTNESS);
+  
+  settingsBrightness = EEPROM.read(SETTING_BRIGHTNESS);  
   Serial.println("  Brightness = " + String(settingsBrightness) );
+  
   settingsAnimationMode = readAnimiationMode(String(EEPROM.read(SETTING_ANIMATION_MODE)));
   Serial.println("  Animation Mode = " + String(settingsAnimationMode) );
+  
   settingsWantedEffectIndex = EEPROM.read(SETTING_WANTED_EFFECT_INDEX);
   Serial.println("  Wanted Effect Index = " + String(settingsWantedEffectIndex) );
 }
@@ -83,30 +87,31 @@ void saveEEPROM(int idx, uint8_t value) {
   EEPROM.commit();
 }
 
-void saveSettingsWantedEffectIndex(uint8_t value) {
-  saveEEPROM(SETTING_WANTED_EFFECT_INDEX, value);
-}
-
 extern void setBrightness(uint8_t value);
 extern const uint8_t effectDetailsCount;
-extern void changeEffect();
+// extern void changeEffect();
 void saveSetting(String optionName, String optionValue) {
   if(optionName.equals(SETTING_POWER_NAME)) {
     settingsPowerOn = optionValue.equals(SETTING_POWER_VALUE_ON);
     saveEEPROM(SETTING_POWER, settingsPowerOn);
+    
   } else if(optionName.equals(SETTING_AUTOPLAY_DURATION_NAME)) {
     settingsAutoplayDuration = optionValue.toInt();
     saveEEPROM(SETTING_AUTOPLAY_DURATION, settingsAutoplayDuration);
+    
   } else if(optionName.equals(SETTING_BRIGHTNESS_NAME)) {
     setBrightness(optionValue.toInt());
     saveEEPROM(SETTING_BRIGHTNESS, optionValue.toInt());
+    
   } else if(optionName.equals(SETTING_EFFECT_NAME)) {
     settingsWantedEffectIndex = optionValue.toInt() % effectDetailsCount;
     saveEEPROM(SETTING_WANTED_EFFECT_INDEX, settingsWantedEffectIndex);
+    
   } else if(optionName.equals(SETTING_ANIMATION_MODE_NAME)) {
     settingsAnimationMode = readAnimiationMode(optionValue);
     saveEEPROM(SETTING_ANIMATION_MODE, settingsAnimationMode);
-    changeEffect();
+    // changeEffect();
+    
   } else {
     Serial.println("Unknown settings: " + optionName + "=" + String(optionValue));
   }

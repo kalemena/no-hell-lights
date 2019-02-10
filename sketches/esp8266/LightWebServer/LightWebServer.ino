@@ -225,7 +225,7 @@ void controllerSettings() {
   int httpCode = 404;
 
   for (int i = 0; i < server.args(); i++) {
-    saveSetting(String(server.argName(i)), String(server.arg(i)));
+    saveSettingAndBroadcatChange(server.argName(i), server.arg(i));
     httpCode = 200;
   } 
 
@@ -298,6 +298,7 @@ void controllerEffects() {
   json = String();
 }
 
+// - WEB SOCKET AREA
 void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
   Serial.printf("webSocketEvent(%d, %d, ...)\r\n", num, type);
   switch(type) {
@@ -325,7 +326,7 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t 
           if(idxEqual > 0 && idxEqual < payloadStr.length()) {
             String optionName = payloadStr.substring(9, idxEqual);
             String optionValue = payloadStr.substring(idxEqual+1);
-            saveSetting(optionName, optionValue);
+            saveSettingAndBroadcatChange(optionName, optionValue);
           }
         } else {
           Serial.println("Unknown command");
@@ -348,9 +349,18 @@ void handleWebSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t 
   }
 }
 
+void broadcastOption(String optionName, String optionValue) {
+  // send to all clients this update
+  String msg = "settings/" + optionName + "=" + optionValue;
+  char* msgChar = StringToChar(msg);
+  webSocket.broadcastTXT(msgChar, strlen(msgChar));
+  Serial.printf("Broadcast message [%s]\r\n", msgChar);
+}
+// - WEB SOCKET AREA
+
 void changeEffect() {
   settingsWantedEffectIndex = (settingsWantedEffectIndex+1) % effectDetailsCount;
-  saveSettingsWantedEffectIndex(settingsWantedEffectIndex);
+  saveSettingAndBroadcatChange(SETTING_EFFECT_NAME, String(settingsWantedEffectIndex));
 }
 
 String renderEffects() {
@@ -425,4 +435,17 @@ void exceptionNotFound() {
   server.send(404, "application/json", msg );
     
   digitalWrite(STATUS_LED, 0);
+}
+
+// Utility convert String to Char
+char* StringToChar(String s) {
+  unsigned int bufSize = s.length() + 1; //String length + null terminator
+  char* ret = new char[bufSize];
+  s.toCharArray(ret, bufSize);
+  return ret;
+}
+
+void saveSettingAndBroadcatChange(String optionName, String optionValue) {
+  saveSetting(optionName, optionValue);
+  broadcastOption(optionName, optionValue);
 }
