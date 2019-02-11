@@ -159,6 +159,14 @@ $ curl --request POST http://192.168.1.50/pixels/reset?color=0xFFFFFF
 
 * link:src/rest-animation-02.py[Strobe]
 
+* link:src/rest-animation-03.py[Fade-In Fade-Out]
+
+* link:src/rest-animation-04.py[Fade-Out Random Color]
+
+* link:src/rest-animation-05.py[Fading Sinelon]
+
+* link:src/rest-animation-06.py[Twinkle Random]
+
 
 
 == Resources
