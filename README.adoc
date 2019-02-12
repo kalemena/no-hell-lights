@@ -1,7 +1,19 @@
 
 = no-hell-lights
 
-Having fun with lights and micro-controllers.
+*"No Hell"* pronounces like *"Noël"* in French, meaning *"Christmas"* lights.
+
+While it looks focused on interacting with LED lights, this repository is also a fun way to touch on the below technology:
+
+- Electronic (with very little soldering)
+- Arduino IDE coding (C-like) using ESP8266 supporting Wifi
+- REST API Designs
+- Web-sockets programming
+- Web UI - TBD: VueJS UI ?
+- Open CV for a little of Machine Learning tools - TBD
+- Android - TBD
+
+In short, this repository demonstrate all above topics are "no hell".
 
 == Led Strips
 
@@ -167,17 +179,12 @@ $ curl --request POST http://192.168.1.50/pixels/reset?color=0xFFFFFF
 
 * link:src/rest-animation-06.py[Twinkle Random]
 
-
-
 == Resources
 
-* https://arduino-esp8266.readthedocs.io/en/latest/
-
-* https://github.com/FastLED/FastLED
-* https://github.com/adafruit/Adafruit_NeoPixel[Adafruit_NeoPixel]
-* https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/[Examples]
-
+* link:https://arduino-esp8266.readthedocs.io/en/latest/[]
+* link:https://github.com/FastLED/FastLED[]
+* link:https://github.com/adafruit/Adafruit_NeoPixel[Adafruit_NeoPixel]
+* link:https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/[Examples]
 * LUSTREON 50CM Aluminum Channel Holder For LED Strip Light Bar Under Cabinet Lamp
-
-* https://www.instructables.com/id/Wireless-Music-Reactive-Floor-Lamps
-* https://github.com/hansjny/Natural-Nerd/tree/master/SoundReactive2
+* link:https://www.instructables.com/id/Wireless-Music-Reactive-Floor-Lamps[]
+* link:https://github.com/hansjny/Natural-Nerd/tree/master/SoundReactive2[]
