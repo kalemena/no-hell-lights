@@ -14,7 +14,7 @@ r = requests.get('http://192.168.1.50/status')
 r = requests.post('http://192.168.1.50/settings?animation-mode=paint')
 # r.json()
 
-r = requests.post('http://192.168.1.50/pixels/reset', data = {})
+r = requests.post('http://192.168.1.50/pixels/reset', data = { 'color': 0x000000 })
 # r.json()
  
 # payload = "{ \"pixels\": [ { \"index\":1, \"color\": 0x123456 }, { \"index\": 2, \"color\": 0x987654 } ] }"
