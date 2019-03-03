@@ -188,3 +188,5 @@ $ curl --request POST http://192.168.1.50/pixels/reset?color=0xFFFFFF
 * LUSTREON 50CM Aluminum Channel Holder For LED Strip Light Bar Under Cabinet Lamp
 * link:https://www.instructables.com/id/Wireless-Music-Reactive-Floor-Lamps[]
 * link:https://github.com/hansjny/Natural-Nerd/tree/master/SoundReactive2[]
+
+* link:https://opencv.org/platforms/android/[]
