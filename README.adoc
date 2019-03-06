@@ -53,9 +53,14 @@ Then just hook up data pin to one of the pin of arduino.
 For 12v strips, make sure not to burn the arduino 5v: don't hook the Vcc !
 ====
 
-
 image:res/ws2812-wiring.png[]
 
+
+=== Board
+
+Details of board can be found under link:boards[]
+
+image:res/esp8266-board.png[]
 
 === Sketches
 
