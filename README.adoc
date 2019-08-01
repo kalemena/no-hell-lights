@@ -3,7 +3,7 @@
 
 *"No Hell"* pronounces like *"Noël"* in French, meaning *"Christmas"* lights.
 
-While it looks focused on interacting with LED lights, this repository is also a fun way to touch on the below technology:
+While this project looks focused on interacting with LED lights, this repository is also a fun way to touch on the below technology:
 
 - Electronic (with very little soldering)
 - Arduino IDE coding (C-like) using ESP8266 supporting Wifi
