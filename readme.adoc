@@ -19,7 +19,7 @@ In short, this repository demonstrate all above topics are "no hell".
 
 === Material
 
-WS2812 comes in 5v or 12v.
+* WS2812b comes in 5v or 12v.
 
 [WARNING]
 ====
@@ -29,6 +29,10 @@ WS2812 comes in 5v or 12v.
 Each led consumes 0.2W max, to be safe count 20W for 60 led, that is 20W per meter.
 
 I use 5v 150W power supply so that 10m 600 led strip is fine.
+
+* WS2815 is enhancement of WS2812b (12v with individual address, and with sustain led failure)
+
+* SK6812 is 5v, and has a 4th channel for white light, available in cold or warm white
 
 ==== Wiring
 
